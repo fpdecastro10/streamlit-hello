@@ -2,8 +2,8 @@ import streamlit as st
 
 def main():
 
-    st.title("Que aplicación desea ejecutar")
-    app_selection = st.selectbox("",["Predicción ventas","Asignación de costos"])
+    st.markdown("<h2>Seleccione el tipo de predicción que desea realizar<h2>",unsafe_allow_html=True)
+    app_selection = st.selectbox("",["Asignación de costos","Predicción ventas"])
 
     if app_selection == "Asignación de costos":
         # Ejecutar la primera aplicación

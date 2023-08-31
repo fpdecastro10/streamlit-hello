@@ -89,7 +89,7 @@ def main():
         selected_time = st.slider("Selecciona una hora del día", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
 
     # Configuración de la aplicación
-    st.markdown('<h1 style="text-align: center;">Gráfico interactivo proyección de ventas Guilding</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="text-align: center;">Costo de campaña vs Sales por Store group</h1>', unsafe_allow_html=True)
     # Filtrar los datos según el botón seleccionado
     filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}") 
         
@@ -115,12 +115,12 @@ def main():
 
     correlation_matrix = np.corrcoef(filtered_data["Treg"], filtered_data["sales"])
     correlation = correlation_matrix[0, 1]
-    st.write(f"El resultado de la correlación es: {round(correlation,4)}")
+    st.write(f"Correlación: {round(correlation,4)}")
 
     # Crear el gráfico interactivo
     plt.xlabel('costo de campaña')
     plt.ylabel('sales')
-    plt.title(f'Gráfico filtrado: {index_storeGroup[selected_filter]}')
+    plt.title(f'Store Group Id: {index_storeGroup[selected_filter]}')
     st.pyplot(plt)
 
     if numero_ingresado == 0:
@@ -131,21 +131,24 @@ def main():
         else:
             ventas_totales=f(numero_ingresado)
 
-        st.markdown(f"<h2 style=color:#f7dc00> Ventas pronosticadas: <h3 style=color:#ffffff>{round(ventas_totales)} un [{filtros_seleccionados}]</h3></h2>",unsafe_allow_html=True )
-        st.markdown(f"<h2 style=color:#f7dc00> Crecimiento: <h3 style=color:#ffffff>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,2)} %, venta promedio {round(promedio_ventas)}</h3></h2>",unsafe_allow_html=True )
+        st.markdown(f"<h2 style=color:#f7dc00> Proyección de ventas: <h3 style=color:#ffffff>{round(ventas_totales)} un [{filtros_seleccionados}]</h3></h2>",unsafe_allow_html=True )
+        st.markdown(f"<h2 style=color:#f7dc00> Crecimiento esperado: <h3 style=color:#ffffff>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,2)}% vs venta promedio {filtros_seleccionados} de {round(promedio_ventas)} un (período del {selected_time[0]} al {selected_time[1]} )</h3></h2>",unsafe_allow_html=True )
         filtered_data_product['share_sales'] = round(filtered_data_product['share']*ventas_totales)
         filtered_data_product_store['share_sales'] = round(filtered_data_product_store['share']*ventas_totales)
         
-        filtered_data_product.rename(columns={'share_sales': 'qty sales'}, inplace=True)
-        filtered_data_product.rename(columns={'id_sku': 'sku id'}, inplace=True)
-        filtered_data_product.rename(columns={'name_product': 'nombre del producto'}, inplace=True)
-        st.markdown(dataframe_to_markdown_str(filtered_data_product[['sku id','nombre del producto','qty sales']]))
+        filtered_data_product.rename(columns={'share_sales': 'Qty sales'}, inplace=True)
+        filtered_data_product.rename(columns={'id_sku': 'Sku id'}, inplace=True)
+        filtered_data_product.rename(columns={'name_product': 'Producto'}, inplace=True)
         st.markdown('<div style="height: 20px;"></div>',unsafe_allow_html=True)
-        filtered_data_product_store.rename(columns={'id_sku': 'sku id'}, inplace=True)
-        filtered_data_product_store.rename(columns={'id_store_retailer': 'store id'}, inplace=True)
-        filtered_data_product_store.rename(columns={'name_retailer': 'nombre retailer'}, inplace=True)
-        filtered_data_product_store.rename(columns={'share_sales': 'qty sales'}, inplace=True)
-        st.markdown(dataframe_to_markdown(filtered_data_product_store[['sku id','store id','nombre retailer','qty sales']].sort_values(by='qty sales', ascending=False)))
+        st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto: </h2>",unsafe_allow_html=True )
+
+        st.markdown(dataframe_to_markdown_str(filtered_data_product[['Sku id','Producto','Qty sales']]))
+        filtered_data_product_store.rename(columns={'id_sku': 'Sku id'}, inplace=True)
+        filtered_data_product_store.rename(columns={'id_store_retailer': 'Store id'}, inplace=True)
+        filtered_data_product_store.rename(columns={'name_retailer': 'Retailer'}, inplace=True)
+        filtered_data_product_store.rename(columns={'share_sales': 'Qty sales'}, inplace=True)
+        st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto y store: </h2>",unsafe_allow_html=True )
+        st.markdown(dataframe_to_markdown(filtered_data_product_store[['Sku id','Store id','Retailer','Qty sales']].sort_values(by='Qty sales', ascending=False)))
 
 
 
