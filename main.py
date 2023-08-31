@@ -1,4 +1,3 @@
-from turtle import color
 import streamlit as st
 
 page_bg_img = """
