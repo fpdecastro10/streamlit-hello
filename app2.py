@@ -32,19 +32,8 @@ for idsGroups in listIdGroups:
     h = set(storeGroup_idStoreId.query(f"id_storeGroup == {idsGroups}")['id_store_retailer'])
     setIdStoresGroupsIdStores[idsGroups] = h
 
-page_bg_img = """
-<style>
-    [data-testid="stSidebar"] {
-        background:#F0F2F6;
-    }
-    [data-testid="stHeader"] {
-        background:#F0F2F6;
-    }
-<\style>
-"""
 
 def main():
-    st.markdown(page_bg_img,unsafe_allow_html=True)
     st.title("Aplicación 2")
     # Lógica de la primera aplicación
     with st.sidebar:
