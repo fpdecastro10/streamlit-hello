@@ -4,6 +4,19 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.style.use({
+    'axes.facecolor': '#0e1118',
+    'axes.edgecolor': 'white',
+    'axes.labelcolor': 'white',
+    'text.color': 'white',
+    'xtick.color': 'white',
+    'ytick.color': 'white',
+    'grid.color': '#0e1118',
+    'figure.facecolor': '#0e1118',
+    'figure.edgecolor': '#0e1118',
+    'savefig.facecolor': '#0e1118',
+    'savefig.edgecolor': '#1a1a1a',
+})
 
 data_sw = pd.read_csv('dataset_2_Week_later_salesmorethan0.csv')
 data_sw['cost_campaign_dist'] = (data_sw['cost_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
