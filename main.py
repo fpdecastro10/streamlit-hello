@@ -1,13 +1,7 @@
 import streamlit as st
 
-page_bg_img = """
-<style>
-
-    background-color:#0e1118;
-<\style>
-"""
-st.markdown(page_bg_img,unsafe_allow_html=True)
 def main():
+
     st.title("Que aplicación desea ejecutar")
     app_selection = st.selectbox("",["Predicción ventas","Asignación de costos"])
 

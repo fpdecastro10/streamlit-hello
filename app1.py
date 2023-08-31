@@ -16,7 +16,6 @@ plt.style.use({
     'savefig.facecolor': '#0e1118',
     'savefig.edgecolor': '#1a1a1a',
 })
-
 data_sw = pd.read_csv('dataset_2_Week_later_salesmorethan0.csv')
 data_sw['cost_campaign_dist'] = (data_sw['cost_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
 data_sw['cpc_campaign_dist'] = (data_sw['cpc_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
@@ -59,7 +58,6 @@ def dataframe_to_markdown(df):
 
 def main():
     with st.sidebar:
-
         imagen_local='./logo2x.png'
         st.image(imagen_local, use_column_width=True)
         st.markdown('<h1 style="font-size: 34px;">Filtros </h1>', unsafe_allow_html=True)
