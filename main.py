@@ -1,6 +1,15 @@
+from turtle import color
 import streamlit as st
 
+page_bg_img = """
+<style>
+[data-testid="stAppViewContainer"] {
+    background-color:#0e1118;
+}
+<\style>
+"""
 def main():
+    st.markdown(page_bg_img,unsafe_allow_html=True)
     st.title("Que aplicación desea ejecutar")
     app_selection = st.selectbox("",["Predicción ventas","Asignación de costos"])
 
