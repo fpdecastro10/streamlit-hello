@@ -1,11 +1,10 @@
 import streamlit as st
 
 def main():
+    st.title("Que aplicación desea ejecutar")
+    app_selection = st.selectbox("",["Producto con historial de asignación","Productos nuevos"])
 
-    st.markdown("<h2>Seleccione el tipo de predicción que desea realizar<h2>",unsafe_allow_html=True)
-    app_selection = st.selectbox("",["Asignación de costos","Predicción ventas"])
-
-    if app_selection == "Asignación de costos":
+    if app_selection == "Producto con historial de asignación":
         # Ejecutar la primera aplicación
         from app1 import main as app1_main
         app1_main()
