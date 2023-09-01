@@ -131,15 +131,22 @@ def main():
         else:
             ventas_totales=f(numero_ingresado)
 
-        st.markdown(f"<h2 style=color:#f7dc00> Proyección de ventas: <h3 style=color:#ffffff>{round(ventas_totales)} un [{filtros_seleccionados}]</h3></h2>",unsafe_allow_html=True )
-        st.markdown(f"<h2 style=color:#f7dc00> Crecimiento esperado: <h3 style=color:#ffffff>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,2)}% vs venta promedio {filtros_seleccionados} de {round(promedio_ventas)} un (período del {selected_time[0]} al {selected_time[1]} )</h3></h2>",unsafe_allow_html=True )
+        st.markdown(f'''
+            <h2 style=color:#f7dc00> Proyección de ventas:
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(ventas_totales)}</b> un [ {filtros_seleccionados} ]
+                </p>
+            </h2>''',unsafe_allow_html=True )
+        st.markdown(f'''
+            <h2 style=color:#f7dc00> Crecimiento esperado:
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,2)}%</b> vs venta promedio {filtros_seleccionados} de <b>{round(promedio_ventas)}</b> un (período del {selected_time[0]} al {selected_time[1]})
+                </p>
+            </h2>''',unsafe_allow_html=True)
         filtered_data_product['share_sales'] = round(filtered_data_product['share']*ventas_totales)
         filtered_data_product_store['share_sales'] = round(filtered_data_product_store['share']*ventas_totales)
         
         filtered_data_product.rename(columns={'share_sales': 'Qty sales'}, inplace=True)
         filtered_data_product.rename(columns={'id_sku': 'Sku id'}, inplace=True)
         filtered_data_product.rename(columns={'name_product': 'Producto'}, inplace=True)
-        st.markdown('<div style="height: 20px;"></div>',unsafe_allow_html=True)
         st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto: </h2>",unsafe_allow_html=True )
 
         st.markdown(dataframe_to_markdown_str(filtered_data_product[['Sku id','Producto','Qty sales']]))
@@ -147,11 +154,9 @@ def main():
         filtered_data_product_store.rename(columns={'id_store_retailer': 'Store id'}, inplace=True)
         filtered_data_product_store.rename(columns={'name_retailer': 'Retailer'}, inplace=True)
         filtered_data_product_store.rename(columns={'share_sales': 'Qty sales'}, inplace=True)
+        st.markdown('<div style="height: 10px;"></div>',unsafe_allow_html=True)
         st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto y store: </h2>",unsafe_allow_html=True )
         st.markdown(dataframe_to_markdown(filtered_data_product_store[['Sku id','Store id','Retailer','Qty sales']].sort_values(by='Qty sales', ascending=False)))
-
-
-
 
 if __name__ == "__main__":
     main()
