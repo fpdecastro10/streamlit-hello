@@ -34,24 +34,25 @@ for idsGroups in listIdGroups:
 
 
 def main():
-    st.title("Aplicación 2")
     # Lógica de la primera aplicación
     with st.sidebar:
         uploaded_file = st.file_uploader("Cargar archivo CSV", type=["csv"])
+        numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
         if uploaded_file is not None:
             st.write("Archivo cargado con éxito!")
             dataventasmodelo = pd.read_csv(uploaded_file)
     if uploaded_file is not None:
         skuNew_Stores = set(dataventasmodelo['store_id'].drop_duplicates())
         comp_withStores = {}
+        comp_withStoreslen = {}
         for key, value in setIdStoresGroupsIdStores.items():
-            comp_withStores[key] = len(skuNew_Stores.intersection(value))
+            comp_withStores[key] = {skuNew_Stores.intersection(value)}
+            comp_withStoreslen[key] = len(comp_withStores[key])
 
-        valor_maximo = max(comp_withStores.values())
-        claves_maximas = [clave for clave, valor in comp_withStores.items() if valor == valor_maximo]
-        st.markdown(f"<h2 style=color:#f7dc00> Comportamiento similar encontrado con los stores groups: </h2>",unsafe_allow_html=True )
+        valor_maximo = max(comp_withStoreslen.values())
+        claves_maximas = [clave for clave, valor in comp_withStoreslen.items() if valor == valor_maximo]
+        st.markdown(f"<h2 style=color:#ffffff> Comportamiento similar encontrado con los stores groups: </h2>",unsafe_allow_html=True )
         opcion_seleccionada = st.radio("", claves_maximas)
-        
         
         dataVentasWeek = dataventasmodelo.groupby('ISOweek').sum().reset_index()
         
@@ -61,28 +62,30 @@ def main():
         filtered_data = filter_data_storeGroup.groupby("yearweek_campaign").sum().reset_index()
         d = np.polyfit(filtered_data['cost_campaign_dist'],filtered_data['sales'],2)
         f = np.poly1d(d)
+        f = f- (max(filtered_data['sales']) - max(dataVentasWeek['sales']))
+        
+
         filtered_data.insert(1,'Treg',f(filtered_data['cost_campaign_dist']))
 
-        h = []
-        j = []
-        for i in range(1000):
-            h.append(i)
-            j.append(f(i))
+        st.write()
+        if numero_ingresado != 0:
+            salesEstimated = f(numero_ingresado)
+            if salesEstimated < 0:
+                st.markdown(f"<p> La predicción de ventas es {0}<p>",unsafe_allow_html=True)
+            else:
+                print(f)
+                st.markdown(f"<p> La predicción de ventas es {salesEstimated}<p>",unsafe_allow_html=True)
 
+        
         plt.figure(figsize=(8, 6))
-        # ax=dataVentasWeek.plot.scatter(x='ISOweek', y='sales', color='yellow')
+        dataVentasWeek.plot.scatter(x='ISOweek', y='sales', color='yellow')
         # dataVentasWeek.plot.scatter(x='ISOweek',y='sales',color='red',legend=False)
-
+        # filtered_data.plot.scatter(x='cost_campaign_dist',y='Treg',color='red',legend=False,ax=ax)
         # Crear el gráfico interactivo
-        # plt.xlabel('ISOweek')
-        # plt.ylabel('sales')
-        # plt.title(f'Gráfico filtrado:')
-        # st.pyplot(plt)
-
-        plt.scatter(h, j, label="Mis Datos", color="blue")
+        plt.xlabel('ISOweek')
+        plt.ylabel('sales')
+        plt.title(f'Gráfico filtrado:')
         st.pyplot(plt)
-
-
     
 
 

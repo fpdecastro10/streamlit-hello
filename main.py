@@ -2,7 +2,7 @@ import streamlit as st
 
 def main():
     st.title("Que aplicación desea ejecutar")
-    app_selection = st.selectbox("",["Producto con historial de asignación","Productos nuevos"])
+    app_selection = st.selectbox("",["Productos nuevos","Producto con historial de asignación"])
 
     if app_selection == "Producto con historial de asignación":
         # Ejecutar la primera aplicación
