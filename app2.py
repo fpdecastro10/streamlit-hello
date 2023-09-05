@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
 plt.style.use({
     'axes.facecolor': '#0e1118',
@@ -41,47 +43,58 @@ def main():
         if uploaded_file is not None:
             st.write("Archivo cargado con éxito!")
             dataventasmodelo = pd.read_csv(uploaded_file)
+        datasetStoreSku = data_sw[['id_sku','id_store_retailer','sales']].groupby(['id_sku','id_store_retailer']).mean().reset_index()
+        datasetStoreSkuMean = datasetStoreSku.groupby('id_sku').mean().reset_index()
+        datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') +' - ('+ round(datasetStoreSkuMean['sales'],3).astype('str') +' avg)'
+        nameFilterValue = datasetStoreSkuMean.set_index('concat')['id_sku'].to_dict()
+        
+        opcion = st.multiselect('Seleccione los productos que quiere que participen de la regresion de stores',list(datasetStoreSkuMean['concat']))
+        listToFilterSku = []
+        for element in opcion:
+            listToFilterSku.append(nameFilterValue[element])
+        
     if uploaded_file is not None:
-        skuNew_Stores = set(dataventasmodelo['store_id'].drop_duplicates())
-        comp_withStores = {}
-        comp_withStoreslen = {}
-        for key, value in setIdStoresGroupsIdStores.items():
-            comp_withStores[key] = {skuNew_Stores.intersection(value)}
-            comp_withStoreslen[key] = len(comp_withStores[key])
 
-        valor_maximo = max(comp_withStoreslen.values())
-        claves_maximas = [clave for clave, valor in comp_withStoreslen.items() if valor == valor_maximo]
-        st.markdown(f"<h2 style=color:#ffffff> Comportamiento similar encontrado con los stores groups: </h2>",unsafe_allow_html=True )
-        opcion_seleccionada = st.radio("", claves_maximas)
-        
         dataVentasWeek = dataventasmodelo.groupby('ISOweek').sum().reset_index()
+        storeSkuid = dataventasmodelo.groupby(['sku_id','store_id']).mean().reset_index()
+        skuidMeanSales = storeSkuid.groupby('sku_id').mean().reset_index()
+        if skuidMeanSales.shape[0] == 1:
+            st.markdown(f"<p style=color:#ffffff>Promedio de ventas por stores del producto nuevo es: </p>",unsafe_allow_html=True )
+            st.dataframe(skuidMeanSales[['sku_id', 'sales']])
+        else:
+            st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
+            st.dataframe(skuidMeanSales[['sku_id', 'sales']])
         
-        
-        filter_data_storeGroup = data_sw.query(f"id_storeGroup == {opcion_seleccionada}")
-        
-        filtered_data = filter_data_storeGroup.groupby("yearweek_campaign").sum().reset_index()
-        d = np.polyfit(filtered_data['cost_campaign_dist'],filtered_data['sales'],2)
-        f = np.poly1d(d)
-        f = f- (max(filtered_data['sales']) - max(dataVentasWeek['sales']))
-        
+        if numero_ingresado != 0 and uploaded_file is not None:
+            totalStoresFile = set(dataventasmodelo['id_store_id'])
+            cantidadDeproductos = len(dataventasmodelo['sku_id'].unique())
+            numberTotalStoresFile = len(totalStoresFile)
+            asiganacionCostoDeCampana = (numero_ingresado / numberTotalStoresFile) / cantidadDeproductos
+            totalStoresModelo = set(data_sw.query('id_sku in @listToFilterSku')['id_store_retailer'])
+            totalDeStoresEnComun = totalStoresFile.intersection(totalStoresModelo)
+            numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
 
-        filtered_data.insert(1,'Treg',f(filtered_data['cost_campaign_dist']))
+            amountOfStoresInCommon = round(numberTotalDeStoresEnComun/numberTotalStoresFile,2)
+            st.markdown(f"Se encontro información para el {amountOfStoresInCommon} % de los stores",unsafe_allow_html=True)
+            accumulatorSales = 0
+            if amountOfStoresInCommon > 0.5:
+                for i in totalDeStoresEnComun:
+                    datasetFiltradoProductoNuevo = data_sw.query(f'id_store_retailer == {i} and id_sku in @listToFilterSku')[['cost_campaign_dist','sales']]
+                    datasetFiltradoProductoNuevoX= np.array(datasetFiltradoProductoNuevo['cost_campaign_dist'])
+                    datasetFiltradoProductoNuevoY= np.array(datasetFiltradoProductoNuevo['sales'])
+                    regression = LinearRegression()                                      
+                    X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
+                    regression.fit(X, datasetFiltradoProductoNuevoY)
 
-        st.write()
-        if numero_ingresado != 0:
-            salesEstimated = f(numero_ingresado)
-            if salesEstimated < 0:
-                st.markdown(f"<p> La predicción de ventas es {0}<p>",unsafe_allow_html=True)
-            else:
-                print(f)
-                st.markdown(f"<p> La predicción de ventas es {salesEstimated}<p>",unsafe_allow_html=True)
+                    accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
+
+            st.markdown(f"<p> La predicción de ventas es {accumulatorSales}<p>",unsafe_allow_html=True)
+            
+            print(asiganacionCostoDeCampana)
 
         
         plt.figure(figsize=(8, 6))
         dataVentasWeek.plot.scatter(x='ISOweek', y='sales', color='yellow')
-        # dataVentasWeek.plot.scatter(x='ISOweek',y='sales',color='red',legend=False)
-        # filtered_data.plot.scatter(x='cost_campaign_dist',y='Treg',color='red',legend=False,ax=ax)
-        # Crear el gráfico interactivo
         plt.xlabel('ISOweek')
         plt.ylabel('sales')
         plt.title(f'Gráfico filtrado:')
