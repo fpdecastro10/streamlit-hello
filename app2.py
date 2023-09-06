@@ -43,15 +43,19 @@ def main():
         if uploaded_file is not None:
             st.write("Archivo cargado con éxito!")
             dataventasmodelo = pd.read_csv(uploaded_file)
-        datasetStoreSku = data_sw[['id_sku','id_store_retailer','sales']].groupby(['id_sku','id_store_retailer']).mean().reset_index()
-        datasetStoreSkuMean = datasetStoreSku.groupby('id_sku').mean().reset_index()
-        datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') +' - ('+ round(datasetStoreSkuMean['sales'],3).astype('str') +' avg)'
-        nameFilterValue = datasetStoreSkuMean.set_index('concat')['id_sku'].to_dict()
-        
-        opcion = st.multiselect('Seleccione los productos que quiere que participen de la regresion de stores',list(datasetStoreSkuMean['concat']))
-        listToFilterSku = []
-        for element in opcion:
-            listToFilterSku.append(nameFilterValue[element])
+            datasetStoreSku = data_sw[['id_sku','id_store_retailer','sales']].groupby(['id_sku','id_store_retailer']).mean().reset_index()
+            datasetStoreSkuMean = datasetStoreSku.groupby('id_sku').mean().reset_index()
+            datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') +' - ('+ round(datasetStoreSkuMean['sales'],3).astype('str') +' avg)'
+            nameFilterValue = datasetStoreSkuMean.set_index('concat')['id_sku'].to_dict()
+            
+            min_value_calculated = min(dataventasmodelo['ISOweek'])
+            max_value_calculated = max(dataventasmodelo['ISOweek'])
+            selected_time = st.slider("Seleccione la ventana de semanas con que quiere comparar", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+            
+            opcion = st.multiselect('Seleccione los productos que quiere que participen de la regresion de stores',list(datasetStoreSkuMean['concat']))
+            listToFilterSku = []
+            for element in opcion:
+                listToFilterSku.append(nameFilterValue[element])
         
     if uploaded_file is not None:
 
