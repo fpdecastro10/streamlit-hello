@@ -18,9 +18,6 @@ def dataframe_to_markdown(df):
         markdown += '|\n'
     return markdown
 
-
-
-
 plt.style.use({
     'axes.facecolor': '#0e1118',
     'axes.edgecolor': 'white',

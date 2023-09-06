@@ -79,14 +79,14 @@ def main():
         selected_filter = st.selectbox("Seleccione un storegroup:", botones)
 
         opciones = ['Semanal', 'Mes']
-        filtros_seleccionados = st.radio('Selecciona tus filtros:', opciones)
+        filtros_seleccionados = st.radio('Seleccione la granularidad de tiempo:', opciones)
 
         numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
         
         filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}")    
         min_value_calculated=min(filter_data_storeGroup['yearweek_campaign'])
         max_value_calculated=max(filter_data_storeGroup['yearweek_campaign'])
-        selected_time = st.slider("Selecciona una hora del día", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+        selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
 
     # Configuración de la aplicación
     st.markdown('<h1 style="text-align: center;">Costo de campaña vs Sales por Store group</h1>', unsafe_allow_html=True)
@@ -120,7 +120,7 @@ def main():
     # Crear el gráfico interactivo
     plt.xlabel('costo de campaña')
     plt.ylabel('sales')
-    plt.title(f'Store Group Id: {index_storeGroup[selected_filter]}')
+    plt.title(f'Store Group Id: {selected_filter}')
     st.pyplot(plt)
 
     if numero_ingresado == 0:
@@ -133,12 +133,12 @@ def main():
 
         st.markdown(f'''
             <h2 style=color:#f7dc00> Proyección de ventas:
-                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(ventas_totales)}</b> un [ {filtros_seleccionados} ]
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(ventas_totales)}</b> un {filtros_seleccionados}
                 </p>
             </h2>''',unsafe_allow_html=True )
         st.markdown(f'''
             <h2 style=color:#f7dc00> Crecimiento esperado:
-                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,2)}%</b> vs venta promedio {filtros_seleccionados} de <b>{round(promedio_ventas)}</b> un (período del {selected_time[0]} al {selected_time[1]})
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,1)}%</b> vs venta promedio {filtros_seleccionados} de <b>{round(promedio_ventas)}</b> un (período del {selected_time[0]} al {selected_time[1]})
                 </p>
             </h2>''',unsafe_allow_html=True)
         filtered_data_product['share_sales'] = round(filtered_data_product['share']*ventas_totales)
@@ -153,10 +153,10 @@ def main():
         filtered_data_product_store.rename(columns={'id_sku': 'Sku id'}, inplace=True)
         filtered_data_product_store.rename(columns={'id_store_retailer': 'Store id'}, inplace=True)
         filtered_data_product_store.rename(columns={'name_retailer': 'Retailer'}, inplace=True)
-        filtered_data_product_store.rename(columns={'share_sales': 'Qty sales'}, inplace=True)
+        filtered_data_product_store.rename(columns={'share_sales': 'Qty sales (un)'}, inplace=True)
         st.markdown('<div style="height: 10px;"></div>',unsafe_allow_html=True)
         st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto y store: </h2>",unsafe_allow_html=True )
-        st.markdown(dataframe_to_markdown(filtered_data_product_store[['Sku id','Store id','Retailer','Qty sales']].sort_values(by='Qty sales', ascending=False)))
+        st.markdown(dataframe_to_markdown(filtered_data_product_store[['Sku id','Store id','Retailer','Qty sales (un)']].sort_values(by='Qty sales (un)', ascending=False)))
 
 if __name__ == "__main__":
     main()
