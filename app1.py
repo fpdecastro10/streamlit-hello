@@ -149,7 +149,7 @@ def main():
         filtered_data_product.rename(columns={'name_product': 'Producto'}, inplace=True)
         st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto: </h2>",unsafe_allow_html=True )
 
-        st.markdown(dataframe_to_markdown_str(filtered_data_product[['Sku id','Producto','Qty sales']]))
+        st.markdown(dataframe_to_markdown_str(filtered_data_product[['Sku id','Producto','Qty sales (un)']]))
         filtered_data_product_store.rename(columns={'id_sku': 'Sku id'}, inplace=True)
         filtered_data_product_store.rename(columns={'id_store_retailer': 'Store id'}, inplace=True)
         filtered_data_product_store.rename(columns={'name_retailer': 'Retailer'}, inplace=True)

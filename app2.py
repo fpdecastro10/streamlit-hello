@@ -84,7 +84,6 @@ def main():
         if skuidMeanSales.shape[0] == 1:
             st.markdown(f'''
             <h2 style=color:#f7dc00> Promedio de ventas semanales por store: </h2>''',unsafe_allow_html=True )
-            st.markdown(f"<p style=color:#ffffff>Promedio de ventas por stores del producto nuevo es: </p>",unsafe_allow_html=True )            
             st.markdown(dataframe_to_markdown(skuidMeanSales[['sku_id', 'sales']]))
         else:
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
@@ -104,8 +103,8 @@ def main():
         
         promedio_ventas = np.mean(dataVentasWeek.query(f"{selected_time[0]} < ISOweek and ISOweek < {selected_time[1]} ")['sales'])
         st.markdown(f'''
-            <h2 style=color:#f7dc00> El promedio de venta semanal:
-                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(promedio_ventas,1)}</b>
+            <h2 style=color:#f7dc00>Promedio de ventas semanal:
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(promedio_ventas,1)} un</b>
                 </p>
             </h2>''',unsafe_allow_html=True )
         
@@ -121,7 +120,17 @@ def main():
                     regression.fit(X, datasetFiltradoProductoNuevoY)
 
                     accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
-                st.markdown(f"<p>La predicción de ventas es {accumulatorSales}</p>",unsafe_allow_html=True)
+                
+                st.markdown(f'''
+                <h2 style=color:#f7dc00>Proyección de ventas semanales:
+                    <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{accumulatorSales} un</b>
+                    </p>
+                </h2>''',unsafe_allow_html=True )
+                st.markdown(f'''
+                <h2 style=color:#f7dc00>Crecimiento esperado:
+                    <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,1)}% vs venta promedio Semanal de {promedio_ventas} un (período del {selected_time[0]} al {selected_time[1]})</b>
+                    </p>
+                </h2>''',unsafe_allow_html=True )
                 st.markdown(f"<p>El crecimiento en ventas es {round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,2)}%</p>",unsafe_allow_html=True)
     
 
