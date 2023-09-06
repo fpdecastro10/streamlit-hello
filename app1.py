@@ -144,7 +144,7 @@ def main():
         filtered_data_product['share_sales'] = round(filtered_data_product['share']*ventas_totales)
         filtered_data_product_store['share_sales'] = round(filtered_data_product_store['share']*ventas_totales)
         
-        filtered_data_product.rename(columns={'share_sales': 'Qty sales'}, inplace=True)
+        filtered_data_product.rename(columns={'share_sales': 'Qty sales (un)'}, inplace=True)
         filtered_data_product.rename(columns={'id_sku': 'Sku id'}, inplace=True)
         filtered_data_product.rename(columns={'name_product': 'Producto'}, inplace=True)
         st.markdown(f"<h2 style=color:#f7dc00> Detalle por producto: </h2>",unsafe_allow_html=True )

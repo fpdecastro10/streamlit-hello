@@ -63,20 +63,28 @@ def main():
             
             min_value_calculated = min(dataventasmodelo['ISOweek'])
             max_value_calculated = max(dataventasmodelo['ISOweek'])
-            selected_time = st.slider("Seleccione la ventana de semanas con que quiere comparar", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+            selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
             
-            opcion = st.multiselect('Seleccione los productos que quiere que participen de la regresion de stores',list(datasetStoreSkuMean['concat']))
+            opcion = st.multiselect('Seleccione los productos que desea que participen de la regresión de stores',list(datasetStoreSkuMean['concat']))
             listToFilterSku = []
             for element in opcion:
                 listToFilterSku.append(nameFilterValue[element])
         
     if uploaded_file is not None:
-
+        
         dataVentasWeek = dataventasmodelo.groupby('ISOweek').sum().reset_index()
+        plt.figure(figsize=(8, 6))
+        dataVentasWeek.plot.scatter(x='ISOweek', y='sales', color='yellow')
+        plt.xlabel('ISOweek')
+        plt.ylabel('sales')
+        plt.title(f'Sales por semanas del dataset cargado')
+        st.pyplot(plt)
         storeSkuid = dataventasmodelo[['sku_id','store_id','sales']].groupby(['sku_id','store_id']).mean().reset_index()
         skuidMeanSales = storeSkuid[['sku_id','sales']].groupby('sku_id').mean().reset_index()
         if skuidMeanSales.shape[0] == 1:
-            st.markdown(f"<p style=color:#ffffff>Promedio de ventas por stores del producto nuevo es: </p>",unsafe_allow_html=True )
+            st.markdown(f'''
+            <h2 style=color:#f7dc00> Promedio de ventas semanales por store: </h2>''',unsafe_allow_html=True )
+            st.markdown(f"<p style=color:#ffffff>Promedio de ventas por stores del producto nuevo es: </p>",unsafe_allow_html=True )            
             st.markdown(dataframe_to_markdown(skuidMeanSales[['sku_id', 'sales']]))
         else:
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
@@ -91,10 +99,15 @@ def main():
         numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
 
         amountOfStoresInCommon = round(numberTotalDeStoresEnComun/numberTotalStoresFile,2)
-        st.markdown(f"Se encontro información para el {amountOfStoresInCommon} % de los stores",unsafe_allow_html=True)
+        st.markdown('<div style="height: 10px;"></div>',unsafe_allow_html=True)
+        st.markdown(f"Se encontro información para el {round(amountOfStoresInCommon*100)} % de los stores",unsafe_allow_html=True)
         
         promedio_ventas = np.mean(dataVentasWeek.query(f"{selected_time[0]} < ISOweek and ISOweek < {selected_time[1]} ")['sales'])
-        st.markdown(f"<p>El promedio de venta con la apertura de semanas seleccionada es {round(promedio_ventas,1)}</p>",unsafe_allow_html=True)
+        st.markdown(f'''
+            <h2 style=color:#f7dc00> El promedio de venta semanal:
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(promedio_ventas,1)}</b>
+                </p>
+            </h2>''',unsafe_allow_html=True )
         
         if numero_ingresado != 0:
             accumulatorSales = 0
@@ -110,16 +123,6 @@ def main():
                     accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
                 st.markdown(f"<p>La predicción de ventas es {accumulatorSales}</p>",unsafe_allow_html=True)
                 st.markdown(f"<p>El crecimiento en ventas es {round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,2)}%</p>",unsafe_allow_html=True)
-            
-            print(asiganacionCostoDeCampana)
-
-        
-        plt.figure(figsize=(8, 6))
-        dataVentasWeek.plot.scatter(x='ISOweek', y='sales', color='yellow')
-        plt.xlabel('ISOweek')
-        plt.ylabel('sales')
-        plt.title(f'Sales por semanas del dataset cargado')
-        st.pyplot(plt)
     
 
 
