@@ -60,8 +60,8 @@ def main():
     if uploaded_file is not None:
 
         dataVentasWeek = dataventasmodelo.groupby('ISOweek').sum().reset_index()
-        storeSkuid = dataventasmodelo.groupby(['sku_id','store_id']).mean().reset_index()
-        skuidMeanSales = storeSkuid.groupby('sku_id').mean().reset_index()
+        storeSkuid = dataventasmodelo[['sku_id','store_id','sales']].groupby(['sku_id','store_id']).mean().reset_index()
+        skuidMeanSales = storeSkuid['sku_id','sales'].groupby('sku_id').mean().reset_index()
         if skuidMeanSales.shape[0] == 1:
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas por stores del producto nuevo es: </p>",unsafe_allow_html=True )
             st.dataframe(skuidMeanSales[['sku_id', 'sales']])
