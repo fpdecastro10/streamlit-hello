@@ -5,6 +5,22 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
+def dataframe_to_markdown(df):
+    markdown = "| " + " | ".join(df.columns) + " |\n"
+    markdown += "| " + " | ".join(["---"] * len(df.columns)) + " |\n"
+
+    for index, row in df.iterrows():
+        for column in df.columns:
+            if column == 'sku_id':
+                markdown += '|' + str(int(row[column]))
+            else:
+                markdown += '|' + str(round(row[column],1))
+        markdown += '|\n'
+    return markdown
+
+
+
+
 plt.style.use({
     'axes.facecolor': '#0e1118',
     'axes.edgecolor': 'white',
@@ -39,13 +55,13 @@ def main():
     # Lógica de la primera aplicación
     with st.sidebar:
         uploaded_file = st.file_uploader("Cargar archivo CSV", type=["csv"])
-        numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
         if uploaded_file is not None:
             st.write("Archivo cargado con éxito!")
+            numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
             dataventasmodelo = pd.read_csv(uploaded_file)
             datasetStoreSku = data_sw[['id_sku','id_store_retailer','sales']].groupby(['id_sku','id_store_retailer']).mean().reset_index()
             datasetStoreSkuMean = datasetStoreSku.groupby('id_sku').mean().reset_index()
-            datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') +' - ('+ round(datasetStoreSkuMean['sales'],3).astype('str') +' avg)'
+            datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') +' - ('+ round(datasetStoreSkuMean['sales'],1).astype('str') +' avg)'
             nameFilterValue = datasetStoreSkuMean.set_index('concat')['id_sku'].to_dict()
             
             min_value_calculated = min(dataventasmodelo['ISOweek'])
@@ -61,25 +77,29 @@ def main():
 
         dataVentasWeek = dataventasmodelo.groupby('ISOweek').sum().reset_index()
         storeSkuid = dataventasmodelo[['sku_id','store_id','sales']].groupby(['sku_id','store_id']).mean().reset_index()
-        skuidMeanSales = storeSkuid['sku_id','sales'].groupby('sku_id').mean().reset_index()
+        skuidMeanSales = storeSkuid[['sku_id','sales']].groupby('sku_id').mean().reset_index()
         if skuidMeanSales.shape[0] == 1:
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas por stores del producto nuevo es: </p>",unsafe_allow_html=True )
-            st.dataframe(skuidMeanSales[['sku_id', 'sales']])
+            st.markdown(dataframe_to_markdown(skuidMeanSales[['sku_id', 'sales']]))
         else:
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
             st.dataframe(skuidMeanSales[['sku_id', 'sales']])
         
-        if numero_ingresado != 0 and uploaded_file is not None:
-            totalStoresFile = set(dataventasmodelo['id_store_id'])
-            cantidadDeproductos = len(dataventasmodelo['sku_id'].unique())
-            numberTotalStoresFile = len(totalStoresFile)
-            asiganacionCostoDeCampana = (numero_ingresado / numberTotalStoresFile) / cantidadDeproductos
-            totalStoresModelo = set(data_sw.query('id_sku in @listToFilterSku')['id_store_retailer'])
-            totalDeStoresEnComun = totalStoresFile.intersection(totalStoresModelo)
-            numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
+        totalStoresFile = set(dataventasmodelo['id_store_id'])
+        cantidadDeproductos = len(dataventasmodelo['sku_id'].unique())
+        numberTotalStoresFile = len(totalStoresFile)
+        asiganacionCostoDeCampana = (numero_ingresado / numberTotalStoresFile) / cantidadDeproductos
+        totalStoresModelo = set(data_sw.query('id_sku in @listToFilterSku')['id_store_retailer'])
+        totalDeStoresEnComun = totalStoresFile.intersection(totalStoresModelo)
+        numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
 
-            amountOfStoresInCommon = round(numberTotalDeStoresEnComun/numberTotalStoresFile,2)
-            st.markdown(f"Se encontro información para el {amountOfStoresInCommon} % de los stores",unsafe_allow_html=True)
+        amountOfStoresInCommon = round(numberTotalDeStoresEnComun/numberTotalStoresFile,2)
+        st.markdown(f"Se encontro información para el {amountOfStoresInCommon} % de los stores",unsafe_allow_html=True)
+        
+        promedio_ventas = np.mean(dataVentasWeek.query(f"{selected_time[0]} < ISOweek and ISOweek < {selected_time[1]} ")['sales'])
+        st.markdown(f"<p>El promedio de venta con la apertura de semanas seleccionada es {round(promedio_ventas,1)}</p>",unsafe_allow_html=True)
+        
+        if numero_ingresado != 0:
             accumulatorSales = 0
             if amountOfStoresInCommon > 0.5:
                 for i in totalDeStoresEnComun:
@@ -91,8 +111,8 @@ def main():
                     regression.fit(X, datasetFiltradoProductoNuevoY)
 
                     accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
-
-            st.markdown(f"<p> La predicción de ventas es {accumulatorSales}<p>",unsafe_allow_html=True)
+                st.markdown(f"<p>La predicción de ventas es {accumulatorSales}</p>",unsafe_allow_html=True)
+                st.markdown(f"<p>El crecimiento en ventas es {round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,2)}%</p>",unsafe_allow_html=True)
             
             print(asiganacionCostoDeCampana)
 
@@ -101,7 +121,7 @@ def main():
         dataVentasWeek.plot.scatter(x='ISOweek', y='sales', color='yellow')
         plt.xlabel('ISOweek')
         plt.ylabel('sales')
-        plt.title(f'Gráfico filtrado:')
+        plt.title(f'Sales por semanas del dataset cargado')
         st.pyplot(plt)
     
 
