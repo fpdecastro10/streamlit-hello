@@ -56,9 +56,9 @@ def main():
             st.write("Archivo cargado con éxito!")
             numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
             dataventasmodelo = pd.read_csv(uploaded_file)
-            datasetStoreSku = data_sw[['id_sku','id_store_retailer','sales']].groupby(['id_sku','id_store_retailer']).mean().reset_index()
-            datasetStoreSkuMean = datasetStoreSku.groupby('id_sku').mean().reset_index()
-            datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') +' - ('+ round(datasetStoreSkuMean['sales'],1).astype('str') +' avg)'
+            datasetStoreSku = data_sw[['id_sku','name_product','id_store_retailer','sales']].groupby(['id_sku','name_product','id_store_retailer']).mean().reset_index()
+            datasetStoreSkuMean = datasetStoreSku.groupby(['id_sku','name_product']).mean().reset_index()
+            datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') + ' - ' + datasetStoreSkuMean['name_product'] + ' - ('+ round(datasetStoreSkuMean['sales'],1).astype('str') +' avg)'
             nameFilterValue = datasetStoreSkuMean.set_index('concat')['id_sku'].to_dict()
             
             min_value_calculated = min(dataventasmodelo['ISOweek'])
@@ -81,13 +81,17 @@ def main():
         st.pyplot(plt)
         storeSkuid = dataventasmodelo[['sku_id','store_id','sales']].groupby(['sku_id','store_id']).mean().reset_index()
         skuidMeanSales = storeSkuid[['sku_id','sales']].groupby('sku_id').mean().reset_index()
+        
+        skuidMeanSales.rename(columns={'sku_id': 'Sku id'}, inplace=True)
+        skuidMeanSales.rename(columns={'sales': 'Avg weekly sales per store (un)'}, inplace=True)
+        print(skuidMeanSales.columns)
         if skuidMeanSales.shape[0] == 1:
             st.markdown(f'''
-            <h2 style=color:#f7dc00> Promedio de ventas semanales por store: </h2>''',unsafe_allow_html=True )
-            st.markdown(dataframe_to_markdown(skuidMeanSales[['sku_id', 'sales']]))
+            <h2 style=color:#f7dc00> Promedio de ventas semanales por store: </h2>''',unsafe_allow_html=True)
+            st.markdown(dataframe_to_markdown(skuidMeanSales[['Sku id', 'Avg weekly sales per store (un)']]))
         else:
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
-            st.dataframe(skuidMeanSales[['sku_id', 'sales']])
+            st.dataframe(skuidMeanSales[['Sku id', 'Avg weekly sales per store (un)']])
         
         totalStoresFile = set(dataventasmodelo['id_store_id'])
         cantidadDeproductos = len(dataventasmodelo['sku_id'].unique())
@@ -108,30 +112,29 @@ def main():
                 </p>
             </h2>''',unsafe_allow_html=True )
         
-        if numero_ingresado != 0:
-            accumulatorSales = 0
-            if amountOfStoresInCommon > 0.5:
-                for i in totalDeStoresEnComun:
-                    datasetFiltradoProductoNuevo = data_sw.query(f'id_store_retailer == {i} and id_sku in @listToFilterSku')[['cost_campaign_dist','sales']]
-                    datasetFiltradoProductoNuevoX= np.array(datasetFiltradoProductoNuevo['cost_campaign_dist'])
-                    datasetFiltradoProductoNuevoY= np.array(datasetFiltradoProductoNuevo['sales'])
-                    regression = LinearRegression()                                      
-                    X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
-                    regression.fit(X, datasetFiltradoProductoNuevoY)
+        accumulatorSales = 0
+        if amountOfStoresInCommon > 0.5:
+            for i in totalDeStoresEnComun:
+                datasetFiltradoProductoNuevo = data_sw.query(f'id_store_retailer == {i} and id_sku in @listToFilterSku')[['cost_campaign_dist','sales']]
+                datasetFiltradoProductoNuevoX= np.array(datasetFiltradoProductoNuevo['cost_campaign_dist'])
+                datasetFiltradoProductoNuevoY= np.array(datasetFiltradoProductoNuevo['sales'])
+                regression = LinearRegression()                                      
+                X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
+                regression.fit(X, datasetFiltradoProductoNuevoY)
 
-                    accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
+                accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
+            
+            st.markdown(f'''
+            <h2 style=color:#f7dc00>Proyección de ventas semanales:
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{accumulatorSales} un</b>
+                </p>
+            </h2>''',unsafe_allow_html=True )
+            st.markdown(f'''
+            <h2 style=color:#f7dc00>Crecimiento esperado:
+                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,1)}%</b> vs venta promedio Semanal de <b>{round(promedio_ventas,1)}</b> un (período del {selected_time[0]} al {selected_time[1]})
+                </p>
+            </h2>''',unsafe_allow_html=True )
                 
-                st.markdown(f'''
-                <h2 style=color:#f7dc00>Proyección de ventas semanales:
-                    <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{accumulatorSales} un</b>
-                    </p>
-                </h2>''',unsafe_allow_html=True )
-                st.markdown(f'''
-                <h2 style=color:#f7dc00>Crecimiento esperado:
-                    <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,1)}% vs venta promedio Semanal de {promedio_ventas} un (período del {selected_time[0]} al {selected_time[1]})</b>
-                    </p>
-                </h2>''',unsafe_allow_html=True )
-                st.markdown(f"<p>El crecimiento en ventas es {round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,2)}%</p>",unsafe_allow_html=True)
     
 
 
