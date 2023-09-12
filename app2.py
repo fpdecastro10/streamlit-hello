@@ -56,6 +56,7 @@ def main():
             st.write("Archivo cargado con éxito!")
             numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
             dataventasmodelo = pd.read_csv(uploaded_file)
+            dataventasmodelo = dataventasmodelo.query('sales>0')
             datasetStoreSku = data_sw[['id_sku','name_product','id_store_retailer','sales']].groupby(['id_sku','name_product','id_store_retailer']).mean().reset_index()
             datasetStoreSkuMean = datasetStoreSku.groupby(['id_sku','name_product']).mean().reset_index()
             datasetStoreSkuMean['concat'] = datasetStoreSkuMean['id_sku'].astype('str') + ' - ' + datasetStoreSkuMean['name_product'] + ' - ('+ round(datasetStoreSkuMean['sales'],1).astype('str') +' avg)'
@@ -84,7 +85,7 @@ def main():
         
         skuidMeanSales.rename(columns={'sku_id': 'Sku id'}, inplace=True)
         skuidMeanSales.rename(columns={'sales': 'Avg weekly sales per store (un)'}, inplace=True)
-        print(skuidMeanSales.columns)
+        
         if skuidMeanSales.shape[0] == 1:
             st.markdown(f'''
             <h2 style=color:#f7dc00> Promedio de ventas semanales por store: </h2>''',unsafe_allow_html=True)
@@ -99,6 +100,7 @@ def main():
         asiganacionCostoDeCampana = (numero_ingresado / numberTotalStoresFile) / cantidadDeproductos
         totalStoresModelo = set(data_sw.query('id_sku in @listToFilterSku')['id_store_retailer'])
         totalDeStoresEnComun = totalStoresFile.intersection(totalStoresModelo)
+        print(totalDeStoresEnComun)
         numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
 
         amountOfStoresInCommon = round(numberTotalDeStoresEnComun/numberTotalStoresFile,2)
@@ -113,30 +115,27 @@ def main():
             </h2>''',unsafe_allow_html=True )
         
         accumulatorSales = 0
-        if amountOfStoresInCommon > 0.5:
-            for i in totalDeStoresEnComun:
-                datasetFiltradoProductoNuevo = data_sw.query(f'id_store_retailer == {i} and id_sku in @listToFilterSku')[['cost_campaign_dist','sales']]
-                datasetFiltradoProductoNuevoX= np.array(datasetFiltradoProductoNuevo['cost_campaign_dist'])
-                datasetFiltradoProductoNuevoY= np.array(datasetFiltradoProductoNuevo['sales'])
-                regression = LinearRegression()                                      
-                X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
-                regression.fit(X, datasetFiltradoProductoNuevoY)
-
-                accumulatorSales += round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
-            
-            st.markdown(f'''
-            <h2 style=color:#f7dc00>Proyección de ventas semanales:
-                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{accumulatorSales} un</b>
-                </p>
-            </h2>''',unsafe_allow_html=True )
-            st.markdown(f'''
-            <h2 style=color:#f7dc00>Crecimiento esperado:
-                <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,1)}%</b> vs venta promedio Semanal de <b>{round(promedio_ventas,1)}</b> un (período del {selected_time[0]} al {selected_time[1]})
-                </p>
-            </h2>''',unsafe_allow_html=True )
-                
-    
-
+        for i in totalDeStoresEnComun:
+            datasetFiltradoProductoNuevo = data_sw.query(f'id_store_retailer == {i} and id_sku in @listToFilterSku')[['cost_campaign_dist','sales']]
+            datasetFiltradoProductoNuevoX= np.array(datasetFiltradoProductoNuevo['cost_campaign_dist'])
+            datasetFiltradoProductoNuevoY= np.array(datasetFiltradoProductoNuevo['sales'])
+            regression = LinearRegression()                                      
+            X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
+            regression.fit(X, datasetFiltradoProductoNuevoY)
+            valuePrediction = round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
+            print(i, valuePrediction, np.mean(dataventasmodelo.groupby('id_store_id').mean().reset_index().query(f"id_store_id=={i}")['sales']))
+            accumulatorSales += valuePrediction
+        
+        st.markdown(f'''
+        <h2 style=color:#f7dc00>Proyección de ventas semanales:
+            <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{accumulatorSales} un</b>
+            </p>
+        </h2>''',unsafe_allow_html=True )
+        st.markdown(f'''
+        <h2 style=color:#f7dc00>Crecimiento esperado:
+            <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((accumulatorSales-promedio_ventas)/promedio_ventas)*100,1)}%</b> vs venta promedio Semanal de <b>{round(promedio_ventas,1)}</b> un (período del {selected_time[0]} al {selected_time[1]})
+            </p>
+        </h2>''',unsafe_allow_html=True )
 
 
 if __name__ == "__main__":
