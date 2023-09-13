@@ -80,6 +80,20 @@ def main():
         plt.ylabel('sales')
         plt.title(f'Sales por semanas del dataset cargado')
         st.pyplot(plt)
+        totalStoresFile = set(dataventasmodelo['id_store_id'])
+        cantidadDeproductos = len(dataventasmodelo['sku_id'].unique())
+        numberTotalStoresFile = len(totalStoresFile)
+        asiganacionCostoDeCampana = (numero_ingresado / numberTotalStoresFile) / cantidadDeproductos
+        totalStoresModelo = set(data_sw.query('id_sku in @listToFilterSku')['id_store_retailer'])
+        totalDeStoresEnComun = totalStoresFile.intersection(totalStoresModelo)
+        totalDeStoresEnComunlist = list(totalDeStoresEnComun)
+        numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
+        
+        storeSkuidInCommon = dataventasmodelo.query("id_store_id in @totalDeStoresEnComunlist")[['sku_id','store_id','sales']].groupby(['sku_id','store_id']).mean().reset_index()
+        skuidMeanSalesInCommon = storeSkuidInCommon[['sku_id','sales']].groupby('sku_id').mean().reset_index()
+        skuidMeanSalesInCommon.rename(columns={'sku_id': 'Sku id'}, inplace=True)
+        skuidMeanSalesInCommon.rename(columns={'sales': 'Avg weekly sales per store (un)'}, inplace=True)
+
         storeSkuid = dataventasmodelo[['sku_id','store_id','sales']].groupby(['sku_id','store_id']).mean().reset_index()
         skuidMeanSales = storeSkuid[['sku_id','sales']].groupby('sku_id').mean().reset_index()
         
@@ -94,14 +108,15 @@ def main():
             st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
             st.dataframe(skuidMeanSales[['Sku id', 'Avg weekly sales per store (un)']])
         
-        totalStoresFile = set(dataventasmodelo['id_store_id'])
-        cantidadDeproductos = len(dataventasmodelo['sku_id'].unique())
-        numberTotalStoresFile = len(totalStoresFile)
-        asiganacionCostoDeCampana = (numero_ingresado / numberTotalStoresFile) / cantidadDeproductos
-        totalStoresModelo = set(data_sw.query('id_sku in @listToFilterSku')['id_store_retailer'])
-        totalDeStoresEnComun = totalStoresFile.intersection(totalStoresModelo)
-        print(totalDeStoresEnComun)
-        numberTotalDeStoresEnComun=len(totalDeStoresEnComun)
+        if not skuidMeanSalesInCommon.empty:
+            if skuidMeanSalesInCommon.shape[0] == 1:
+                st.markdown(f'''
+                <h2 style=color:#f7dc00> Promedio de ventas semanales por store en comun: </h2>''',unsafe_allow_html=True)
+                st.markdown(dataframe_to_markdown(skuidMeanSalesInCommon[['Sku id', 'Avg weekly sales per store (un)']]))
+            else:
+                st.markdown(f"<p style=color:#ffffff>Promedio de ventas de los productos nuevos por stores es: </p>",unsafe_allow_html=True )
+                st.dataframe(skuidMeanSalesInCommon[['Sku id', 'Avg weekly sales per store (un)']])
+
 
         amountOfStoresInCommon = round(numberTotalDeStoresEnComun/numberTotalStoresFile,2)
         st.markdown('<div style="height: 10px;"></div>',unsafe_allow_html=True)
@@ -123,7 +138,7 @@ def main():
             X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
             regression.fit(X, datasetFiltradoProductoNuevoY)
             valuePrediction = round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
-            print(i, valuePrediction, np.mean(dataventasmodelo.groupby('id_store_id').mean().reset_index().query(f"id_store_id=={i}")['sales']))
+            # print(i, valuePrediction, np.mean(dataventasmodelo.groupby('id_store_id').mean().reset_index().query(f"id_store_id=={i}")['sales']))
             accumulatorSales += valuePrediction
         
         st.markdown(f'''
