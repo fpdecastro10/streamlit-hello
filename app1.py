@@ -140,7 +140,9 @@ def main():
                 ventas_totales = f(numero_ingresado/4) * 4
             else:
                 ventas_totales=f(numero_ingresado)
-
+            if ventas_totales<0:
+                ventas_totales=0
+            
             st.markdown(f'''
                 <h2 style=color:#f7dc00> Proyección de ventas:
                     <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(ventas_totales)}</b> un {filtros_seleccionados}
