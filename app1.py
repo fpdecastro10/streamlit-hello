@@ -76,7 +76,7 @@ def main():
         temp_index_storeGroup = dict(index_storeGroup)
 
         for key, value in temp_index_storeGroup.items():
-            if data_sw.query(f"id_storeGroup == {value}").groupby("yearweek_campaign").sum().reset_index().shape[0] <= 8:
+            if data_sw.query(f"id_storeGroup == {value}").groupby("yearweek_campaign").sum().reset_index().shape[0] < 7:
                 index_storeGroup.pop(key)
         
         if index_storeGroup == {}:
