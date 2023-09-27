@@ -151,7 +151,7 @@ def main():
         
         st.markdown(f'''
         <h2 style=color:#f7dc00>Proyección de ventas semanales:
-            <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{accumulatorSales} un</b>
+            <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(accumulatorSales)} un</b>
             </p>
         </h2>''',unsafe_allow_html=True )
         st.markdown(f'''
