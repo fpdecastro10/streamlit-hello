@@ -129,7 +129,7 @@ def main():
                 </p>
             </h2>''',unsafe_allow_html=True )
         
-         accumulatorSales = 0
+        accumulatorSales = 0
         intercept = 0
         coeficient = 0
         for i in totalDeStoresEnComun:
