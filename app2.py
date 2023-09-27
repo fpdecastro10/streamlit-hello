@@ -129,17 +129,25 @@ def main():
                 </p>
             </h2>''',unsafe_allow_html=True )
         
-        accumulatorSales = 0
+         accumulatorSales = 0
+        intercept = 0
+        coeficient = 0
         for i in totalDeStoresEnComun:
             datasetFiltradoProductoNuevo = data_sw.query(f'id_store_retailer == {i} and id_sku in @listToFilterSku')[['cost_campaign_dist','sales']]
-            datasetFiltradoProductoNuevoX= np.array(datasetFiltradoProductoNuevo['cost_campaign_dist'])
-            datasetFiltradoProductoNuevoY= np.array(datasetFiltradoProductoNuevo['sales'])
-            regression = LinearRegression()                                      
-            X = datasetFiltradoProductoNuevoX.reshape(-1, 1)  # Asegúrate de que X sea una matriz 2D (una característica)
-            regression.fit(X, datasetFiltradoProductoNuevoY)
-            valuePrediction = round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
-            # print(i, valuePrediction, np.mean(dataventasmodelo.groupby('id_store_id').mean().reset_index().query(f"id_store_id=={i}")['sales']))
-            accumulatorSales += valuePrediction
+            if datasetFiltradoProductoNuevo.shape[0] > 10:
+                d = np.polyfit(datasetFiltradoProductoNuevo['cost_campaign_dist'],datasetFiltradoProductoNuevo['sales'],1)
+                f = np.poly1d(d)
+                intercept += f[0]
+                coeficient += f[1]
+                # valuePrediction = round(regression.predict(np.array(asiganacionCostoDeCampana).reshape(-1,1))[0])
+                valuePrediction = f(asiganacionCostoDeCampana)
+                # print(i, valuePrediction, np.mean(dataventasmodelo.groupby('id_store_id').mean().reset_index().query(f"id_store_id=={i}")['sales']))
+                accumulatorSales += valuePrediction
+        
+        if coeficient<0:
+            coeficient= coeficient*-1
+        accumulatorSales = coeficient * asiganacionCostoDeCampana + intercept
+       
         
         st.markdown(f'''
         <h2 style=color:#f7dc00>Proyección de ventas semanales:
