@@ -102,8 +102,8 @@ def main():
         st.markdown('<h1 style="text-align: center;">Costo de campaña vs Sales por Store group</h1>', unsafe_allow_html=True)
         # Filtrar los datos según el botón seleccionado
         filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}") 
-            
-        filtered_data = filter_data_storeGroup.groupby("yearweek_campaign").sum().reset_index()
+        
+        filtered_data = filter_data_storeGroup.groupby("yearweek_campaign").agg({'sales': 'sum', 'cost_campaign': 'mean'}).reset_index()
         promedio_ventas = np.mean(filtered_data.query(f"{selected_time[0]} < yearweek_campaign and yearweek_campaign < {selected_time[1]} ")['sales'])
 
         # Constuimos el data frame con sku_id
@@ -115,13 +115,13 @@ def main():
         filtered_data_product_store = filter_data_storeGroup.groupby(['id_sku','id_store_retailer','name_retailer']).sum().reset_index()[['id_sku', 'id_store_retailer','name_retailer', 'sales']]
         filtered_data_product_store['share'] = filtered_data_product_store['sales']/total_sales
 
-        d = np.polyfit(filtered_data['cost_campaign_dist'],filtered_data['sales'],2)
+        d = np.polyfit(filtered_data['cost_campaign'],filtered_data['sales'],2)
         f = np.poly1d(d)
-        filtered_data.insert(1,'Treg',f(filtered_data['cost_campaign_dist']))
+        filtered_data.insert(1,'Treg',f(filtered_data['cost_campaign']))
 
         plt.figure(figsize=(8, 6))
-        ax=filtered_data.plot.scatter(x='cost_campaign_dist', y='sales', color='yellow')
-        filtered_data.plot.scatter(x='cost_campaign_dist',y='Treg',color='red',legend=False,ax=ax)
+        ax=filtered_data.plot.scatter(x='cost_campaign', y='sales', color='yellow')
+        filtered_data.plot.scatter(x='cost_campaign',y='Treg',color='red',legend=False,ax=ax)
 
         correlation_matrix = np.corrcoef(filtered_data["Treg"], filtered_data["sales"])
         correlation = correlation_matrix[0, 1]
