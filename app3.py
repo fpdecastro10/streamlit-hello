@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import zipfile
+from app1 import dataframe_to_markdown
 
 zip_file_path = "dataset_to_detect_performance_of_stores.csv.zip"
 with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
@@ -21,21 +22,6 @@ plt.style.use({
     'savefig.facecolor': '#0e1118',
     'savefig.edgecolor': '#1a1a1a',
 })
-
-def dataframe_to_markdown(df):
-    markdown = "| " + " | ".join(df.columns) + " |\n"
-    markdown += "| " + " | ".join(["---"] * len(df.columns)) + " |\n"
-
-    for index, row in df.iterrows():
-        for column in df.columns:
-            try:
-                markdown += '|' + str(round(row[column],2))
-        # markdown += "| " + " | ".join(str(row[column]) for column in df.columns) + " |\n"
-            except:
-                markdown += '|' + str(row[column])
-        markdown += '|\n'
-    return markdown
-
 
 data_sw = pd.read_csv("dataset_to_detect_performance_of_stores.csv")
 
@@ -76,15 +62,19 @@ def main():
 
         dataset_after_filter = data_sw.query(f"campaign_storeGroup in @opciones_seleccionadas and id_storeGroup == {id_storeGroup_filter} and sku_id == {sku_selected}")
         
-        stores_id = list(dataset_after_filter["id_store_retailer"].unique())
         
-        dataset_after_filter_sorted= dataset_after_filter.sort_values(by="ISOweek")
+        dataset_after_filter_sorted = dataset_after_filter.sort_values(by="ISOweek")
 
+        min_value_calculated=min(dataset_after_filter['ISOweek'])
+        max_value_calculated=max(dataset_after_filter['ISOweek'])
+        selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+        
+        stores_id = list(dataset_after_filter["id_store_retailer"].unique())
         stores_list = []
         coefficients_list = []
 
         for store in stores_id:
-            dataset_after_filter_sorted_by_store = dataset_after_filter_sorted.query(f"id_store_retailer == {store}")
+            dataset_after_filter_sorted_by_store = dataset_after_filter_sorted.query(f"id_store_retailer == {store} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
             y = list(dataset_after_filter_sorted_by_store["ISOweek"])
             x = list(dataset_after_filter_sorted_by_store["sales"])
             if not all(elemento == 0 for elemento in x):
@@ -99,16 +89,16 @@ def main():
         df_stores = pd.DataFrame(dataframe_coefficients).sort_values("coefficients").head(10)
 
         stores_filter = df_stores["stores"] 
-        store_selected = st.selectbox("Stores con tendencia negativa:", stores_filter)        
+        store_selected = st.selectbox("Stores con tendencia negativa:", stores_filter)
 
-    dataset_after_filter_sorted_individualStore = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected}")[["ISOweek","sales"]]
-    d = np.polyfit(dataset_after_filter_sorted_individualStore["ISOweek"],dataset_after_filter_sorted_individualStore["sales"],1)
+    negative_tendecy_of_stores = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")[["ISOweek","sales"]]
+    d = np.polyfit(negative_tendecy_of_stores["ISOweek"],negative_tendecy_of_stores["sales"],1)
     f = np.poly1d(d)
-    dataset_after_filter_sorted_individualStore.insert(1,"Treg",f(dataset_after_filter_sorted_individualStore["ISOweek"]))
+    negative_tendecy_of_stores.insert(1,"Treg",f(negative_tendecy_of_stores["ISOweek"]))
     
     plt.figure(figsize=(8, 6))
-    ax = dataset_after_filter_sorted_individualStore.plot.scatter(x="ISOweek",y="sales",color="yellow")
-    dataset_after_filter_sorted_individualStore.plot.scatter(x="ISOweek",y="Treg",color="red",legend=False,ax=ax)
+    ax = negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="sales",color="yellow")
+    negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="Treg",color="red",legend=False,ax=ax)
 
 
     plt.xlabel('week')
