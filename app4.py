@@ -91,8 +91,8 @@ def main():
         dict_to_calculate[medio] = cost_list
 
     for row in amount_week:
-        sales_week = int(campaign_value.query(f"ISOweek == {row}").groupby("ISOweek").mean().reset_index()["sales"])
-        amount_sales.append(sales_week)
+        sales_week = campaign_value.query(f"ISOweek == {row}").groupby("ISOweek").mean().reset_index()["sales"]
+        amount_sales.append(int(sales_week))
         
     dict_to_calculate["ISOweek"]=amount_week
     dict_to_calculate["sales"]=amount_sales
