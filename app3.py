@@ -99,8 +99,13 @@ def main():
     plt.figure(figsize=(8, 6))
     ax = negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="sales",color="yellow")
     negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="Treg",color="red",legend=False,ax=ax)
+    # etiquetas_personalizadas = df_tabla_medio_StoreGroup_sorted_list[::len(df_tabla_medio_StoreGroup_sorted_list) // (num_ticks - 1)]
 
-
+    ISOweek_negative_tendecy = list(negative_tendecy_of_stores["ISOweek"].unique())
+    num_ticks = 6
+    etiquetas_personalizadas = ISOweek_negative_tendecy[::len(ISOweek_negative_tendecy) // (num_ticks - 1)]
+    plt.xticks(etiquetas_personalizadas)
+    plt.ticklabel_format(useOffset=False, style='plain')
     plt.xlabel('week')
     plt.ylabel('sales')
     plt.title(f'Store Id: {selected_filter}')
