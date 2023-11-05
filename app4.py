@@ -22,6 +22,14 @@ plt.style.use({
     'savefig.facecolor': '#0e1118',
     'savefig.edgecolor': '#1a1a1a',
 })
+
+def search_key_based_on_Value(diccionario, valor_buscado):
+    # Itera a través del diccionario
+    for clave, valor in diccionario.items():
+        if valor == valor_buscado:
+            return clave
+    # Si no se encuentra el valor, devuelve None o una cadena vacía u otro valor predeterminado
+    return None
     
 def concatenar_strings(lista):
     # Inicializa una cadena vacía para la concatenación
@@ -178,10 +186,28 @@ def main():
         calculated[key]["per"] = calculated[key]["sum"]/total
 
     if numero_ingresado > 0 and opcion != []:
+        data_filter = data_sales_stores.query("id_storeGroup in @list_store_to_filter")
         for medio in tabla_medio:
             percentage = round(numero_ingresado * calculated[medio]["per"])
             medio_iter = medio.split(" ")[0]
             st.markdown(f"<h4>Lo invertido en {medio_iter} debe ser el {percentage}</h4>",unsafe_allow_html=True)
+
+            data_filter = data_filter.groupby("id_storeGroup").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
+            data_filter["per tiendas"] = data_filter['id_store_retailer'] / data_filter['id_store_retailer'].sum() * 100
+            data_filter["per sales"] = data_filter['sales'] / data_filter['sales'].sum() * 100
+            data_filter["KPI"] =  data_filter["per sales"] / data_filter["per tiendas"]
+            data_filter["share tiendas budget"] = (data_filter["per tiendas"]/100) * percentage
+            data_filter["share ventas budget"] = (data_filter["per sales"]/100) * percentage
+            data_filter["investment"] = (data_filter["share tiendas budget"] + data_filter["share ventas budget"]) / 2
+            
+            store_group_investment = {"Store Group":[],"Inversión":[]}
+            for indice, fila in data_filter.iterrows():
+                store_group_id = fila['id_storeGroup']
+                investment = round(fila['investment'])
+                store_group_investment["Store Group"].append(search_key_based_on_Value(index_storeGroup,store_group_id))
+                store_group_investment["Inversión"].append(investment)
+                
+            st.markdown(dataframe_to_markdown(pd.DataFrame(store_group_investment)), unsafe_allow_html=True)
 
 
 
