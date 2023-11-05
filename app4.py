@@ -69,6 +69,14 @@ def main():
             index_storeGroup[nueva_key] = row["store_group_id"]
         temp_index_storeGroup = dict(index_storeGroup)
 
+        index_storeGroup_second_approach = {}
+        filter_list_store_group_second_approach = []
+        for index, row in unique_combinations.iterrows():
+            nueva_key=str(row["store_group_id"])+' - ' + row['name_storeGroup']
+            filter_list_store_group_second_approach.append(nueva_key)
+            index_storeGroup_second_approach[nueva_key] = row["store_group_id"]
+        temp_index_storeGroup = dict(index_storeGroup)
+
         botones = [key for key in index_storeGroup]
         selected_filter = st.selectbox("Seleccione un storegroup:", botones)
 
@@ -78,7 +86,7 @@ def main():
 
         numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
         
-        opcion = st.multiselect('Seleccione los productos que desea que participen de la regresión de stores',list(filter_list_store_group))
+        opcion = st.multiselect('Seleccione los productos que desea que participen de la regresión de stores',list(filter_list_store_group_second_approach))
 
 
     store_group_n = data_sw.query(f"store_group_id == {index_storeGroup[selected_filter]}")
@@ -165,10 +173,10 @@ def main():
     st.pyplot(plt)
 
 
-    dataset_analytic_approach = data_sw.query(f"{selected_time[0]} < ISOweek and ISOweek < {selected_time[1]} ")
+    dataset_analytic_approach = data_sw.query(f"{selected_time[0]} < yearweek and yearweek < {selected_time[1]}")
     list_store_to_filter = []
     for i in opcion:
-        list_store_to_filter.append(index_storeGroup[i])
+        list_store_to_filter.append(index_storeGroup_second_approach[i])
     dataset_analytic_approach_filter = dataset_analytic_approach.query("store_group_id in @list_store_to_filter")
     
     lsit_tabla_medio = dataset_analytic_approach_filter["tabla_medio"].unique()
@@ -186,7 +194,7 @@ def main():
         calculated[key]["per"] = calculated[key]["sum"]/total
 
     if numero_ingresado > 0 and opcion != []:
-        data_filter = data_sales_stores.query("id_storeGroup in @list_store_to_filter")
+        data_filter = data_sales_stores.query(f"id_storeGroup in @list_store_to_filter and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
         for medio in tabla_medio:
             percentage = round(numero_ingresado * calculated[medio]["per"])
             medio_iter = medio.split(" ")[0]
@@ -204,7 +212,7 @@ def main():
             for indice, fila in data_filter.iterrows():
                 store_group_id = fila['id_storeGroup']
                 investment = round(fila['investment'])
-                store_group_investment["Store Group"].append(search_key_based_on_Value(index_storeGroup,store_group_id))
+                store_group_investment["Store Group"].append(search_key_based_on_Value(index_storeGroup_second_approach,store_group_id))
                 store_group_investment["Inversión"].append(investment)
                 
             st.markdown(dataframe_to_markdown(pd.DataFrame(store_group_investment)), unsafe_allow_html=True)
