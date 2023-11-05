@@ -91,99 +91,97 @@ def main():
         dict_to_calculate[medio] = cost_list
 
     for row in amount_week:
-        sales_week = campaign_value.query(f"ISOweek == {row}").groupby("ISOweek").mean().reset_index()["sales"]
-        print(sales_week)
-    sales_week
-    #     amount_sales.append(int(sales_week))
+        sales_week = campaign_value.query(f"ISOweek == {row}").groupby("ISOweek")["sales"].mean()
+        amount_sales.append(int(sales_week))
         
-    # dict_to_calculate["ISOweek"]=amount_week
-    # dict_to_calculate["sales"]=amount_sales
+    dict_to_calculate["ISOweek"]=amount_week
+    dict_to_calculate["sales"]=amount_sales
 
-    # df_tabla_medio_StoreGroup = pd.DataFrame(dict_to_calculate)
+    df_tabla_medio_StoreGroup = pd.DataFrame(dict_to_calculate)
 
-    # X = df_tabla_medio_StoreGroup[tabla_medio]
-    # y = df_tabla_medio_StoreGroup["sales"]
+    X = df_tabla_medio_StoreGroup[tabla_medio]
+    y = df_tabla_medio_StoreGroup["sales"]
 
 
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=0)
-    # model = RandomForestRegressor(random_state=1)
-    # model.fit(X_train, y_train)
-    # pred = model.predict(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=0)
+    model = RandomForestRegressor(random_state=1)
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
     
-    # model_test = sm.OLS(y, X).fit()
-    # summary = model_test.summary()
-    # # print(summary)
+    model_test = sm.OLS(y, X).fit()
+    summary = model_test.summary()
+    # print(summary)
 
-    # st.markdown(f"<p>Nuestro modelo explica el <b>{round(model_test.rsquared,2)}%</b> de las ventas con respecto a los inputs de {concatenar_strings(tabla_medio)}</p>",unsafe_allow_html=True)
+    st.markdown(f"<p>Nuestro modelo explica el <b>{round(model_test.rsquared,2)}%</b> de las ventas con respecto a los inputs de {concatenar_strings(tabla_medio)}</p>",unsafe_allow_html=True)
 
-    # reg = LinearRegression().fit(X, y)
-    # alpha = reg.intercept_
-    # coefs = reg.coef_
-    # st.markdown(f"<h4>Venta de base promedio <b>{round(alpha,2)}</b></h4>",unsafe_allow_html=True)
+    reg = LinearRegression().fit(X, y)
+    alpha = reg.intercept_
+    coefs = reg.coef_
+    st.markdown(f"<h4>Venta de base promedio <b>{round(alpha,2)}</b></h4>",unsafe_allow_html=True)
     
-    # for medio in range(len(tabla_medio)):
-    #     string_medio = re.sub(r'\bWeekly\b', '', tabla_medio[medio])
-    #     st.markdown(f"<h4>Si gastamos $100 en {string_medio}, esperamos tener una venta adicional de {round(coefs[medio]*100)} unidades</h4>",unsafe_allow_html=True)
+    for medio in range(len(tabla_medio)):
+        string_medio = re.sub(r'\bWeekly\b', '', tabla_medio[medio])
+        st.markdown(f"<h4>Si gastamos $100 en {string_medio}, esperamos tener una venta adicional de {round(coefs[medio]*100)} unidades</h4>",unsafe_allow_html=True)
 
-    # # Graficamos las ventas
-    # plt.figure(figsize=(8, 6))
-    # # ax=df_tabla_medio_StoreGroup.plot.scatter(x='Google Weekly', y='sales', color='yellow')
-    # df_tabla_medio_StoreGroup_sorted = df_tabla_medio_StoreGroup.sort_values(by='ISOweek')
-    # df_tabla_medio_StoreGroup_sorted_list = list(df_tabla_medio_StoreGroup_sorted["ISOweek"])
+    # Graficamos las ventas
+    plt.figure(figsize=(8, 6))
+    # ax=df_tabla_medio_StoreGroup.plot.scatter(x='Google Weekly', y='sales', color='yellow')
+    df_tabla_medio_StoreGroup_sorted = df_tabla_medio_StoreGroup.sort_values(by='ISOweek')
+    df_tabla_medio_StoreGroup_sorted_list = list(df_tabla_medio_StoreGroup_sorted["ISOweek"])
 
-    # df_tabla_medio_StoreGroup_sorted.plot.scatter(x='ISOweek',y='sales',color='yellow',legend=False)
-    # plt.xlabel('week')
-    # plt.ylabel('sales')
-    # plt.title(f'Store Group Id: {selected_filter}')
-    # num_ticks = 6
-    # etiquetas_personalizadas = df_tabla_medio_StoreGroup_sorted_list[::len(df_tabla_medio_StoreGroup_sorted_list) // (num_ticks - 1)]
-    # plt.xticks(etiquetas_personalizadas)
-    # plt.ticklabel_format(useOffset=False, style='plain')
-    # st.pyplot(plt)
+    df_tabla_medio_StoreGroup_sorted.plot.scatter(x='ISOweek',y='sales',color='yellow',legend=False)
+    plt.xlabel('week')
+    plt.ylabel('sales')
+    plt.title(f'Store Group Id: {selected_filter}')
+    num_ticks = 6
+    etiquetas_personalizadas = df_tabla_medio_StoreGroup_sorted_list[::len(df_tabla_medio_StoreGroup_sorted_list) // (num_ticks - 1)]
+    plt.xticks(etiquetas_personalizadas)
+    plt.ticklabel_format(useOffset=False, style='plain')
+    st.pyplot(plt)
 
-    # plt.figure(figsize=(8, 6))
-    # color_list = ["#362FD9","#C70039","green"]
+    plt.figure(figsize=(8, 6))
+    color_list = ["#362FD9","#C70039","green"]
     
-    # medio = 0
-    # if len(tabla_medio) > 1:
-    #     for i in range(len(tabla_medio)-1):
-    #         ax=df_tabla_medio_StoreGroup_sorted.plot.scatter(x=tabla_medio[medio], y='sales', color=color_list[medio], label=tabla_medio[medio])
-    #         medio +=1
-    #     df_tabla_medio_StoreGroup_sorted.plot.scatter(x=tabla_medio[medio],y='sales',color=color_list[medio],label=tabla_medio[medio],ax=ax)
-    # else:
-    #     df_tabla_medio_StoreGroup_sorted.plot.scatter(x=tabla_medio[medio],y='sales',color=color_list[medio],label=tabla_medio[medio])
+    medio = 0
+    if len(tabla_medio) > 1:
+        for i in range(len(tabla_medio)-1):
+            ax=df_tabla_medio_StoreGroup_sorted.plot.scatter(x=tabla_medio[medio], y='sales', color=color_list[medio], label=tabla_medio[medio])
+            medio +=1
+        df_tabla_medio_StoreGroup_sorted.plot.scatter(x=tabla_medio[medio],y='sales',color=color_list[medio],label=tabla_medio[medio],ax=ax)
+    else:
+        df_tabla_medio_StoreGroup_sorted.plot.scatter(x=tabla_medio[medio],y='sales',color=color_list[medio],label=tabla_medio[medio])
 
-    # plt.xlabel('cost')
-    # plt.ylabel('sales')
-    # plt.title(f'Store Group Id: {selected_filter}')
-    # st.pyplot(plt)
+    plt.xlabel('cost')
+    plt.ylabel('sales')
+    plt.title(f'Store Group Id: {selected_filter}')
+    st.pyplot(plt)
 
 
-    # dataset_analytic_approach = data_sw.query(f"{selected_time[0]} < ISOweek and ISOweek < {selected_time[1]} ")
-    # list_store_to_filter = []
-    # for i in opcion:
-    #     list_store_to_filter.append(index_storeGroup[i])
-    # dataset_analytic_approach_filter = dataset_analytic_approach.query("store_group_id in @list_store_to_filter")
+    dataset_analytic_approach = data_sw.query(f"{selected_time[0]} < ISOweek and ISOweek < {selected_time[1]} ")
+    list_store_to_filter = []
+    for i in opcion:
+        list_store_to_filter.append(index_storeGroup[i])
+    dataset_analytic_approach_filter = dataset_analytic_approach.query("store_group_id in @list_store_to_filter")
     
-    # lsit_tabla_medio = dataset_analytic_approach_filter["tabla_medio"].unique()
-    # calculated = {}
-    # for media in lsit_tabla_medio:
-    #     list_tabla_medio = dataset_analytic_approach_filter[["tabla_medio","cost_convertion"]].query(f"tabla_medio in {[media]}")["cost_convertion"]
-    #     sum_medio = np.sum(list_tabla_medio)
-    #     avg_medio = np.mean(list_tabla_medio)
-    #     calculated[media] = {"sum":sum_medio,"avg":avg_medio}
+    lsit_tabla_medio = dataset_analytic_approach_filter["tabla_medio"].unique()
+    calculated = {}
+    for media in lsit_tabla_medio:
+        list_tabla_medio = dataset_analytic_approach_filter[["tabla_medio","cost_convertion"]].query(f"tabla_medio in {[media]}")["cost_convertion"]
+        sum_medio = np.sum(list_tabla_medio)
+        avg_medio = np.mean(list_tabla_medio)
+        calculated[media] = {"sum":sum_medio,"avg":avg_medio}
     
-    # total = 0
-    # for key, value in calculated.items():
-    #     total += value["sum"]
-    # for key, value in calculated.items():
-    #     calculated[key]["per"] = calculated[key]["sum"]/total
+    total = 0
+    for key, value in calculated.items():
+        total += value["sum"]
+    for key, value in calculated.items():
+        calculated[key]["per"] = calculated[key]["sum"]/total
 
-    # if numero_ingresado > 0 and opcion != []:
-    #     for medio in tabla_medio:
-    #         percentage = round(numero_ingresado * calculated[medio]["per"])
-    #         medio_iter = medio.split(" ")[0]
-    #         st.markdown(f"<h4>Lo invertido en {medio_iter} debe ser el {percentage}</h4>",unsafe_allow_html=True)
+    if numero_ingresado > 0 and opcion != []:
+        for medio in tabla_medio:
+            percentage = round(numero_ingresado * calculated[medio]["per"])
+            medio_iter = medio.split(" ")[0]
+            st.markdown(f"<h4>Lo invertido en {medio_iter} debe ser el {percentage}</h4>",unsafe_allow_html=True)
 
 
 
