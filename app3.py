@@ -153,4 +153,4 @@ def main():
     b64 = base64.b64encode(csv_data.encode()).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download="exported_data.csv">Descargar CSV</a>'
     st.markdown("<div style='height:40px'>",unsafe_allow_html=True)
-    st.markdown(href,unsafe_allow_html=True)    
+    st.markdown(href,unsafe_allow_html=True)
