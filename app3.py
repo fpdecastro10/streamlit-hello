@@ -116,9 +116,16 @@ def main():
 
     retailer_name = dataset_after_filter_sorted_by_store_and_time_window['retailer_name'].unique()[0]
 
-    d = np.polyfit(negative_tendecy_of_stores["ISOweek"],negative_tendecy_of_stores["sales"],1)
+    negative_tendecy_of_stores['row_number'] = range(1, len(negative_tendecy_of_stores) + 1)
+
+    negative_tendecy_of_stores['ISOweek'] = negative_tendecy_of_stores['ISOweek'].astype('str')
+    df_25['ISOweek'] = df_25['ISOweek'].astype('str')
+    df_50['ISOweek'] = df_50['ISOweek'].astype('str')
+    df_75['ISOweek'] = df_75['ISOweek'].astype('str')
+    
+    d = np.polyfit(negative_tendecy_of_stores["row_number"],negative_tendecy_of_stores["sales"],1)
     f = np.poly1d(d)
-    negative_tendecy_of_stores.insert(1,"Treg",f(negative_tendecy_of_stores["ISOweek"]))
+    negative_tendecy_of_stores.insert(1,"Treg",f(negative_tendecy_of_stores["row_number"]))
     
     plt.figure(figsize=(8, 6))
     
@@ -134,7 +141,6 @@ def main():
     num_ticks = 6
     etiquetas_personalizadas = ISOweek_negative_tendecy[::len(ISOweek_negative_tendecy) // (num_ticks - 1)]
     plt.xticks(etiquetas_personalizadas)
-    plt.ticklabel_format(useOffset=False, style='plain')
     plt.xlabel('week')
     plt.ylabel('sales')
     st.markdown("<h3 style='text-align:center'>Tendecias de ventas</h3>",unsafe_allow_html=True)
