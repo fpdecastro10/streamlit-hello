@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.express as px
 import pandas as pd
 import re
 import numpy as np
@@ -9,6 +10,12 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 from app1 import dataframe_to_markdown
 from scipy.stats import zscore
+import zipfile
+
+zip_file_path = "dataset_to_detect_performance_of_stores.csv.zip"
+with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    zip_ref.extractall(".")
+
 
 plt.style.use({
     'axes.facecolor': '#0e1118',
@@ -26,12 +33,24 @@ plt.style.use({
 
 data_sw = pd.read_csv("datasetCampignSales.csv")
 data_sales_stores = pd.read_csv("dataset_2_Week_later_salesmorethan0.csv")
+if 'df_sales_storeGroup' in  st.session_state:
+    df_sales_storeGroup = st.session_state.df_sales_storeGroup
+else:
+    st.session_state.df_sales_storeGroup = pd.read_csv("dataset_to_detect_performance_of_stores.csv")
+    df_sales_storeGroup = st.session_state.df_sales_storeGroup
 
 list_campaing_store_group = data_sw["campaign"].unique().tolist()
+list_campaing_store_group_new_client = df_sales_storeGroup.query("campaign_storeGroup not in @list_campaing_store_group")["campaign_storeGroup"].unique().tolist()
+
 unique_combinations = data_sw[[
                             "store_group_id",
                             "name_storeGroup",
                             "campaign"]].drop_duplicates(["store_group_id","name_storeGroup","campaign"])
+
+unique_combinations_new_client = df_sales_storeGroup[[
+                                    "id_storeGroup",
+                                    "name_storeGroup",
+                                    "campaign_storeGroup"]].drop_duplicates(["id_storeGroup","name_storeGroup","campaign_storeGroup"])
 
 unique_combination_id_name_storeGroup = data_sw[[
     "store_group_id",
@@ -58,13 +77,13 @@ def concatenar_strings(lista):
             resultado +=(", " + elemento)
     return resultado[1:]
 
-def dict_number_name_storeGroup(df_filter):
+def dict_number_name_storeGroup(df_filter,col1, col2):
     index_storeGroup = {}
     filter_list_store_group = []
     for index, row in df_filter.iterrows():
-        nueva_key=str(row["store_group_id"])+' - ' + row['name_storeGroup']
+        nueva_key=str(row[col1])+' - ' + row[col2]
         filter_list_store_group.append(nueva_key)
-        index_storeGroup[nueva_key] = row["store_group_id"]
+        index_storeGroup[nueva_key] = row[col1]
     return index_storeGroup, filter_list_store_group    
 
 def df_builder_tablaMedio(df_tablaMedio_ISOweek):
@@ -147,13 +166,11 @@ def first_approach(storeGroup_id):
     graph_tablaMedio_sales(df_tablaMedio_listCost,unique_tablaMedio,storeGroup_id)
 
 
-def second_approach(input_number,list_seleceted_stores, dict_key_number_storeGroup,selected_time,bool_execute):
+def second_approach(input_number,list_seleceted_stores, selected_time,bool_execute):
     if bool_execute:
         df_filter_by_time = data_sw.query(f"{selected_time[0]} < yearweek and yearweek < {selected_time[1]}")
-        list_store_to_filter = []
-        for storeFroup in list_seleceted_stores:
-            list_store_to_filter.append(dict_key_number_storeGroup[storeFroup])
-        df_filter_storeGroups = df_filter_by_time.query("store_group_id in @list_store_to_filter")
+        
+        df_filter_storeGroups = df_filter_by_time.query("campaign in @list_seleceted_stores")
         list_tabla_medio = df_filter_storeGroups["tabla_medio"].unique().tolist()
         dict_tablaMedio_sum_avg = {}
         for medio in list_tabla_medio:
@@ -167,28 +184,31 @@ def second_approach(input_number,list_seleceted_stores, dict_key_number_storeGro
         for key, value in dict_tablaMedio_sum_avg.items():
             dict_tablaMedio_sum_avg[key]["per"] = dict_tablaMedio_sum_avg[key]["sum"]/total
         
-        df_sales_filter_by_date_list_StoreGroup = data_sales_stores.query(f"id_storeGroup in @list_store_to_filter and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+        df_sales_filter_by_date_list_StoreGroup = data_sales_stores.query(f"campaign_storeGroup in @list_seleceted_stores and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+        df_sales_filter_by_date_list_StoreGroup["concat_idStoreGroup_nameStoreGroup"] = df_sales_filter_by_date_list_StoreGroup["id_storeGroup"].astype(str) + " - " + df_sales_filter_by_date_list_StoreGroup["name_storeGroup"]
         for medio in list_tabla_medio:
             percentage = round(input_number * dict_tablaMedio_sum_avg[medio]["per"])
             medio_iter = medio.split(" ")[0]
             st.markdown(f"<h4>Lo invertido en {medio_iter} debe ser el {percentage}</h4>",unsafe_allow_html=True)
 
-            data_filter = df_sales_filter_by_date_list_StoreGroup.groupby("id_storeGroup").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
+            data_filter = df_sales_filter_by_date_list_StoreGroup.groupby("concat_idStoreGroup_nameStoreGroup").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
             data_filter["per tiendas"] = data_filter['id_store_retailer'] / data_filter['id_store_retailer'].sum() * 100
             data_filter["per sales"] = data_filter['sales'] / data_filter['sales'].sum() * 100
             data_filter["KPI"] =  data_filter["per sales"] / data_filter["per tiendas"]
             data_filter["share tiendas budget"] = (data_filter["per tiendas"]/100) * percentage
             data_filter["share ventas budget"] = (data_filter["per sales"]/100) * percentage
             data_filter["investment"] = (data_filter["share tiendas budget"] + data_filter["share ventas budget"]) / 2
-            
-            store_group_investment = {"Store Group":[],"Inversión":[]}
-            for indice, fila in data_filter.iterrows():
-                store_group_id = fila['id_storeGroup']
-                investment = round(fila['investment'])
-                store_group_investment["Store Group"].append(search_key_based_on_Value(dict_key_number_storeGroup,store_group_id))
-                store_group_investment["Inversión"].append(investment)
                 
-            st.markdown(dataframe_to_markdown(pd.DataFrame(store_group_investment)), unsafe_allow_html=True)
+            st.markdown(dataframe_to_markdown(pd.DataFrame(data_filter[["concat_idStoreGroup_nameStoreGroup","investment"]])), unsafe_allow_html=True)
+        st.markdown("<div style='height:20px'></div>",unsafe_allow_html=True)
+        # pie_graph(pd.DataFrame(dict_of_avg_alpha_coefs_shares.items(), columns=['tabla_medio', 'investment']),"tabla_medio","investment","Distribución de budget por tabla medio")
+
+        dict_medio_per = {}
+        for key, value in dict_tablaMedio_sum_avg.items():
+            dict_medio_per[key] = value["per"]
+        pie_graph(pd.DataFrame(dict_medio_per.items(), columns=['canal', 'investment']),"canal","investment","Distribución del budget total por canal")
+        pie_graph(data_filter,"concat_idStoreGroup_nameStoreGroup","investment","Distribución del budget total por Store Group")
+
 
 def coefficient_tabla_medio(storeGroup_id):
     df_storeGroup_id = data_sw.query(f"store_group_id == {storeGroup_id} & sales > 0")
@@ -225,7 +245,8 @@ def coefficient_tabla_medio(storeGroup_id):
 
     return dict_result
 
-def third_percent(list_storeGroups_id):
+def third_percent():
+    list_storeGroups_id = data_sw["store_group_id"].unique().tolist()
     df_accumulator = pd.DataFrame()
     for storeGroup in list_storeGroups_id:
         dict_coeff_storesGroups = coefficient_tabla_medio(storeGroup)
@@ -237,11 +258,56 @@ def third_percent(list_storeGroups_id):
         serie_column = df_accumulator[column]
         serie_positive = serie_column > 0
         medio_avg[column] = np.mean(serie_column[serie_positive])
-    st.write(medio_avg)
+    return medio_avg
+
+def share_dict(dict_of_avg_alpha_coefs):
+    total_value = sum(dict_of_avg_alpha_coefs.values())
+    new_dict = {}
+    for key, value in dict_of_avg_alpha_coefs.items():
+        new_dict[key] = value / total_value
+    return new_dict
+
+def pie_graph(df,columnsx,columnsy,title):
+    fig = px.pie(names=df[columnsx], values=df[columnsy])
+    st.markdown(f"<h3 style='text-align:center'>{title}</h3>",unsafe_allow_html=True)
+    st.plotly_chart(fig)
+
+
+def new_client(camaping_new_client,investment, window_time):
+    df_filter_by_camp = df_sales_storeGroup.query(f"campaign_storeGroup in @camaping_new_client")
+    df_filter_by_camp_time = df_filter_by_camp.query(f"{window_time[0]} < ISOweek and ISOweek < {window_time[1]}")
+    # Filter the original dataset by the campaign and time window
+    
+    if "dict_of_avg_alpha_coefs" in st.session_state:
+        dict_of_avg_alpha_coefs = st.session_state.dict_of_avg_alpha_coefs
+        del dict_of_avg_alpha_coefs['alpha']
+    else:
+        st.session_state.dict_of_avg_alpha_coefs = third_percent()
+        dict_of_avg_alpha_coefs = st.session_state.dict_of_avg_alpha_coefs
+        del dict_of_avg_alpha_coefs['alpha']
+    
+    dict_of_avg_alpha_coefs_shares = share_dict(dict_of_avg_alpha_coefs)
+    
+    df_filter_by_camp_time["concat_idStoreGroup_nameStoreGroup"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
+    df_filter_by_camp_time = df_filter_by_camp_time.groupby("concat_idStoreGroup_nameStoreGroup").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
+    df_filter_by_camp_time["per tiendas"] = df_filter_by_camp_time['id_store_retailer'] / df_filter_by_camp_time['id_store_retailer'].sum() * 100
+    df_filter_by_camp_time["per sales"] = df_filter_by_camp_time['sales'] / df_filter_by_camp_time['sales'].sum() * 100
+    df_filter_by_camp_time["KPI"] =  df_filter_by_camp_time["per sales"] / df_filter_by_camp_time["per tiendas"]
+    for key, value in dict_of_avg_alpha_coefs_shares.items():
+        key_str = key.replace("coefs_","").replace("_Weekly","")
+        value_to_invest = round(value*investment)
+        st.markdown(f"<h3>La distribución en {key_str} será de {value_to_invest}</h3>",unsafe_allow_html=True)
+        df_filter_by_camp_time["share tiendas budget"] = (df_filter_by_camp_time["per tiendas"]/100) * value_to_invest
+        df_filter_by_camp_time["share ventas budget"] = (df_filter_by_camp_time["per sales"]/100) * value_to_invest 
+        df_filter_by_camp_time["investment"] = (df_filter_by_camp_time["share tiendas budget"] + df_filter_by_camp_time["share ventas budget"]) / 2
+        st.markdown(dataframe_to_markdown(df_filter_by_camp_time[["concat_idStoreGroup_nameStoreGroup","investment"]]), unsafe_allow_html=True)
+    st.markdown("<div style='height:20px'></div>",unsafe_allow_html=True)
+    pie_graph(pd.DataFrame(dict_of_avg_alpha_coefs_shares.items(), columns=['canal', 'investment']),"canal","investment","Distribución del budget total por canal")
+    pie_graph(df_filter_by_camp_time,"concat_idStoreGroup_nameStoreGroup","investment","Distribución del budget total por Store Group")
+
 
 
 def main():
-    st.title("Estamos creando una nueva aplicación")
 
     with st.sidebar:
         imagen_local='./logo2x.png'
@@ -250,30 +316,38 @@ def main():
 
         type_of_client = st.selectbox("Tipo de cliente:", ["Cliente Nuevo","Cliente con Historial"])
 
-        selected_option = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group)
-        number_name_StoreGroup = return_storeGroup_of_Campaign(selected_option)
-        key_number_name_storeGroup,number_name_storeGroup = dict_number_name_storeGroup(number_name_StoreGroup)
+        if type_of_client == "Cliente Nuevo":
+            camaping_new_client = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group_new_client)
+            serie_ISOweek = df_sales_storeGroup.query("campaign_storeGroup in @camaping_new_client")["ISOweek"]
+            min_date, max_date = min(serie_ISOweek), max(serie_ISOweek)
+            investment_in_media = st.number_input("Inversión en medios:",min_value=0)
+            window_time = st.slider(
+                "Seleccione la ventana temporal de referencia para el cálculo de distribución",
+                min_value=min_date,
+                max_value=max_date,
+                value=(min_date, max_date)
+            )
+        else:
+            selected_option = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group)
+            investment_in_media = st.number_input("Inversión en medios:",min_value=0)
+            serie_ISOweek = data_sw.query("campaign in @selected_option")["ISOweek"]                
+            min_date, max_date = min(serie_ISOweek), max(serie_ISOweek)
+            selected_time = st.slider(
+                "Seleccione la ventana temporal de referencia para el cálculo de distribución",
+                min_value=min_date,
+                max_value=max_date,
+                value=(min_date, max_date)
+            )
 
-        # botones = [key for key in key_number_name_storeGroup]
-        selected_filter = st.selectbox("Seleccione un storegroup:", number_name_storeGroup)
 
-        min_value_calculated=min(data_sw['ISOweek'])
-        max_value_calculated=max(data_sw['ISOweek'])
-        selected_time = st.slider(  
-            "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
-            min_value=min_value_calculated,
-            max_value=max_value_calculated,
-            value=(min_value_calculated, max_value_calculated)
-        )
 
-        input_number = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
-        key_number_name_name_storeGroup2,list_id_name_storeGroup =  dict_number_name_storeGroup(unique_combination_id_name_storeGroup)
-        list_of_storeGroup_selected = st.multiselect('Seleccione los productos que desea que participen de la regresión de stores',list(list_id_name_storeGroup))
-
-    first_approach(key_number_name_storeGroup[selected_filter])
-
-    bool_aproach2 = input_number > 0 and list_of_storeGroup_selected != []
-    second_approach(input_number,list_of_storeGroup_selected,key_number_name_name_storeGroup2,selected_time,bool_aproach2)
-
-    list_of_store_group = data_sw["store_group_id"].unique().tolist()
-    third_percent(list_of_store_group)
+    if type_of_client == "Cliente Nuevo":
+        if investment_in_media > 0:
+            new_client(camaping_new_client,investment_in_media, window_time)
+        else:
+            st.write("Debe ingresar un monto a invertir")
+    else:
+        if investment_in_media > 0:
+            second_approach(investment_in_media,selected_option,selected_time,True)
+        else:
+            st.write("Debe ingresar un monto a invertir")
