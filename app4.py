@@ -280,7 +280,6 @@ def new_client(camaping_new_client,investment, window_time):
     
     if "dict_of_avg_alpha_coefs" in st.session_state:
         dict_of_avg_alpha_coefs = st.session_state.dict_of_avg_alpha_coefs
-        del dict_of_avg_alpha_coefs['alpha']
     else:
         st.session_state.dict_of_avg_alpha_coefs = third_percent()
         dict_of_avg_alpha_coefs = st.session_state.dict_of_avg_alpha_coefs
