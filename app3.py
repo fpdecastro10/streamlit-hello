@@ -80,7 +80,7 @@ def main():
             if not all(elemento == 0 for elemento in x):
                 coefficients = np.polyfit(x,y,1)
                 stores_list.append(store)
-                coefficients_list.append(str(round(coefficients[0])))
+                coefficients_list.append(round(coefficients[0]))
                 stores_id_list.append(dataset_after_filter_sorted_by_store["id_store"].unique()[0])
                 retailer_id_list.append(dataset_after_filter_sorted_by_store["retailer_name"].unique()[0])
                 
@@ -133,9 +133,9 @@ def main():
     # negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="Treg",color="red",legend=False,ax=ax)
     
     plt.scatter(negative_tendecy_of_stores['ISOweek'],negative_tendecy_of_stores['Treg'], color='#F5FCCD')
-    plt.scatter(df_25['ISOweek'],df_25['sales'],color='#F8DE22',label='sales<=25')
+    plt.scatter(df_25['ISOweek'],df_25['sales'],color='#C70039',label='sales<=25')
     plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25<sales<=75')
-    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#C70039',label='75<sales')
+    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75<sales')
 
     ISOweek_negative_tendecy = list(negative_tendecy_of_stores["ISOweek"].unique())
     num_ticks = 6
@@ -145,13 +145,8 @@ def main():
     plt.ylabel('sales')
     st.markdown("<h3 style='text-align:center'>Tendecias de ventas</h3>",unsafe_allow_html=True)
     plt.legend()
-    title_graph = f"""
-    Store Id: {store_selected} - Retailer: {retailer_name}
-    Store Group: {selected_filter}"""
-    plt.title(title_graph)
-    # Plot the trendline
-    st.pyplot(plt)
     st.markdown("<h3 style='text-align:center'>Top 10 stores con mayor tendencia negativa dentro del Store Group seleccionado</h3>", unsafe_allow_html=True)
+    df_stores.drop(columns='stores',inplace=True)
     df_stores_formated = df_stores.to_html(index=False).replace("<td>","<td style='text-align:center'>").replace("<table border='1' class='dataframe'>","<table border='1' class='dataframe' sytle='margin:auto'>").replace("<th>","<th style='text-align:center'>")
     st.markdown(df_stores_formated,unsafe_allow_html=True)
 
@@ -160,3 +155,10 @@ def main():
     href = f'<a href="data:file/csv;base64,{b64}" download="exported_{selected_filter}.csv">Descargar CSV</a>'
     st.markdown("<div style='height:40px'>",unsafe_allow_html=True)
     st.markdown(href,unsafe_allow_html=True)
+    
+    title_graph = f"""
+    Store Id: {store_selected} - Retailer: {retailer_name}
+    Store Group: {selected_filter}"""
+    plt.title(title_graph)
+    # Plot the trendline
+    st.pyplot(plt)
