@@ -87,7 +87,7 @@ def main():
                 list_with_cero_sales_per_week = list(map(str,list(dataset_after_filter_sorted_by_store[['ISOweek','sales']].query("sales <= 0")['ISOweek'])))
                 
                 total_number_of_week = list(dataset_after_filter_sorted_by_store['ISOweek'].unique())
-                percentage_week_of_cero.append(str(round((len(list_with_cero_sales_per_week) / len(total_number_of_week))*100,2)))
+                percentage_week_of_cero.append(str(round((len(list_with_cero_sales_per_week) / len(total_number_of_week))*100)))
                 
                 week_with_cero_sales.append(", ".join(list_with_cero_sales_per_week))
 
@@ -96,7 +96,7 @@ def main():
             "Store id" : stores_id_list,
             "Retailer" : retailer_id_list,
             "Tendencia de venta" : coefficients_list,
-            "% Semanas con venta cero" : percentage_week_of_cero,
+            "Semanas con venta cero [%]" : percentage_week_of_cero,
             "Semanas con ventas cero" : week_with_cero_sales
         }
         
@@ -135,7 +135,7 @@ def main():
     plt.scatter(negative_tendecy_of_stores['ISOweek'],negative_tendecy_of_stores['Treg'], color='#F5FCCD')
     plt.scatter(df_25['ISOweek'],df_25['sales'],color='#C70039',label='sales<=25')
     plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25<sales<=75')
-    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75<sales')
+    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75>sales')
 
     ISOweek_negative_tendecy = list(negative_tendecy_of_stores["ISOweek"].unique())
     num_ticks = 6
