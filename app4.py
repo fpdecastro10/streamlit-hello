@@ -287,22 +287,22 @@ def new_client(camaping_new_client,investment, window_time):
     
     dict_of_avg_alpha_coefs_shares = share_dict(dict_of_avg_alpha_coefs)
     
-    df_filter_by_camp_time["concat_idStoreGroup_nameStoreGroup"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
-    df_filter_by_camp_time = df_filter_by_camp_time.groupby("concat_idStoreGroup_nameStoreGroup").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
+    df_filter_by_camp_time["Store Group"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
+    df_filter_by_camp_time = df_filter_by_camp_time.groupby("Store Group").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
     df_filter_by_camp_time["per tiendas"] = df_filter_by_camp_time['id_store_retailer'] / df_filter_by_camp_time['id_store_retailer'].sum() * 100
     df_filter_by_camp_time["per sales"] = df_filter_by_camp_time['sales'] / df_filter_by_camp_time['sales'].sum() * 100
     df_filter_by_camp_time["KPI"] =  df_filter_by_camp_time["per sales"] / df_filter_by_camp_time["per tiendas"]
     for key, value in dict_of_avg_alpha_coefs_shares.items():
         key_str = key.replace("coefs_","").replace("_Weekly","")
         value_to_invest = round(value*investment)
-        st.markdown(f"<h3>La distribución en {key_str} será de {value_to_invest}</h3>",unsafe_allow_html=True)
+        st.markdown(f"<h3>Se recomienda invertir en ${value_to_invest} del total en el canal {key_str}</h3>",unsafe_allow_html=True)
         df_filter_by_camp_time["share tiendas budget"] = (df_filter_by_camp_time["per tiendas"]/100) * value_to_invest
         df_filter_by_camp_time["share ventas budget"] = (df_filter_by_camp_time["per sales"]/100) * value_to_invest 
         df_filter_by_camp_time["investment"] = (df_filter_by_camp_time["share tiendas budget"] + df_filter_by_camp_time["share ventas budget"]) / 2
-        st.markdown(dataframe_to_markdown(df_filter_by_camp_time[["concat_idStoreGroup_nameStoreGroup","investment"]]), unsafe_allow_html=True)
+        st.markdown(dataframe_to_markdown(df_filter_by_camp_time[["Store Group","investment"]]), unsafe_allow_html=True)
     st.markdown("<div style='height:20px'></div>",unsafe_allow_html=True)
     pie_graph(pd.DataFrame(dict_of_avg_alpha_coefs_shares.items(), columns=['canal', 'investment']),"canal","investment","Distribución del budget total por canal")
-    pie_graph(df_filter_by_camp_time,"concat_idStoreGroup_nameStoreGroup","investment","Distribución del budget total por Store Group")
+    pie_graph(df_filter_by_camp_time,"Store Group","investment","Distribución del budget total por Store Group")
 
 
 
@@ -331,12 +331,15 @@ def main():
             investment_in_media = st.number_input("Inversión en medios:",min_value=0)
             serie_ISOweek = data_sw.query("campaign in @selected_option")["ISOweek"]                
             min_date, max_date = min(serie_ISOweek), max(serie_ISOweek)
-            selected_time = st.slider(
-                "Seleccione la ventana temporal de referencia para el cálculo de distribución",
-                min_value=min_date,
-                max_value=max_date,
-                value=(min_date, max_date)
-            )
+            if not min_date == max_date:
+                selected_time = st.slider(
+                    "Seleccione la ventana temporal de referencia para el cálculo de distribución",
+                    min_value=min_date,
+                    max_value=max_date,
+                    value=(min_date, max_date)
+                )
+            else:
+                selected_time = (min_date, max_date)
 
 
 
@@ -347,6 +350,7 @@ def main():
             st.write("Debe ingresar un monto a invertir")
     else:
         if investment_in_media > 0:
+            
             second_approach(investment_in_media,selected_option,selected_time,True)
         else:
             st.write("Debe ingresar un monto a invertir")
