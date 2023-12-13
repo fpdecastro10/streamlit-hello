@@ -168,7 +168,10 @@ def first_approach(storeGroup_id):
 
 def second_approach(input_number,list_seleceted_stores, selected_time,bool_execute):
     if bool_execute:
-        df_filter_by_time = data_sw.query(f"{selected_time[0]} <= yearweek and yearweek <= {selected_time[1]}")
+        if selected_time[0] != selected_time[1]:
+            df_filter_by_time = data_sw.query(f"{selected_time[0]} <= yearweek and yearweek <= {selected_time[1]}")
+        else:
+            df_filter_by_time = data_sw.copy()
         
         df_filter_storeGroups = df_filter_by_time.query("campaign in @list_seleceted_stores")
         list_tabla_medio = df_filter_storeGroups["tabla_medio"].unique().tolist()
@@ -186,6 +189,7 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         
         df_sales_filter_by_date_list_StoreGroup = data_sales_stores.query(f"campaign_storeGroup in @list_seleceted_stores and {selected_time[0]} <= ISOweek and ISOweek <= {selected_time[1]}")
         df_sales_filter_by_date_list_StoreGroup["concat_idStoreGroup_nameStoreGroup"] = df_sales_filter_by_date_list_StoreGroup["id_storeGroup"].astype(str) + " - " + df_sales_filter_by_date_list_StoreGroup["name_storeGroup"]
+
         for medio in list_tabla_medio:
             percentage = round(input_number * dict_tablaMedio_sum_avg[medio]["per"])
             medio_iter = medio.split(" ")[0]
