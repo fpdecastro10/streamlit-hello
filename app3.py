@@ -102,7 +102,7 @@ def main():
         
         df_stores = pd.DataFrame(dataframe_coefficients).sort_values("Tendencia de venta").head(10)
 
-        stores_filter = df_stores["Store id"] 
+        stores_filter = df_stores["stores"] 
         store_selected = st.selectbox("Stores con tendencia negativa:", stores_filter)
 
     dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
