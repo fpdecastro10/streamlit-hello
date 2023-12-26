@@ -102,10 +102,12 @@ def main():
         
         df_stores = pd.DataFrame(dataframe_coefficients).sort_values("Tendencia de venta").head(10)
 
-        stores_filter = df_stores["stores"] 
+        stores_filter = df_stores["Store id"]    
+        relations_storesDB_storeId = df_stores[["stores","Store id"]].drop_duplicates(["stores","Store id"])
         store_selected = st.selectbox("Stores con tendencia negativa:", stores_filter)
+        store_selected_filter = relations_storesDB_storeId.query(f"`Store id` == {store_selected}")["stores"].unique()[0]
 
-    dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+    dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected_filter} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
     negative_tendecy_of_stores = dataset_after_filter_sorted_by_store_and_time_window[["ISOweek","sales"]]
 
     boundaries = dict(negative_tendecy_of_stores['sales'].describe())
