@@ -16,14 +16,17 @@ plt.style.use({
     'savefig.facecolor': '#0e1118',
     'savefig.edgecolor': '#1a1a1a',
 })
-data_sw = pd.read_csv('dataset_2_Week_later_salesmorethan0.csv')
-data_sw['cost_campaign_dist'] = (data_sw['cost_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
-data_sw['cpc_campaign_dist'] = (data_sw['cpc_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
-data_sw['cpm_campaign_dist'] = (data_sw['cpm_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
-data_sw['ctr_campaign_dist'] = (data_sw['ctr_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
-data_sw['impressions_campaign_dist'] = (data_sw['impressions_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
-unique_combinations = data_sw[["id_storeGroup","name_storeGroup","campaign_storeGroup"]].drop_duplicates(["id_storeGroup","name_storeGroup","campaign_storeGroup"])
-unique_combinations_campaign = unique_combinations["campaign_storeGroup"].drop_duplicates()
+def def_delay_dataset(delay):
+    if delay == '1 semana':
+        data_sw = pd.read_csv('dataset_1_Week_later_salesmorethan0.csv')
+    else:
+        data_sw = pd.read_csv('dataset_2_Week_later_salesmorethan0.csv')
+    data_sw['cost_campaign_dist'] = (data_sw['cost_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
+    data_sw['cpc_campaign_dist'] = (data_sw['cpc_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
+    data_sw['cpm_campaign_dist'] = (data_sw['cpm_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
+    data_sw['ctr_campaign_dist'] = (data_sw['ctr_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
+    data_sw['impressions_campaign_dist'] = (data_sw['impressions_campaign']/data_sw["cantidad_de_stores_por_storeGroup"])/ data_sw["cant_de_prod_por_storeGroup"]
+    return data_sw
 
 def dataframe_to_markdown_str(df):
     markdown = "| " + " | ".join(df.columns) + " |\n"
@@ -63,12 +66,15 @@ def main():
         st.image(imagen_local, use_column_width=True)
         st.markdown('<h1 style="font-size: 34px;">Filtros </h1>', unsafe_allow_html=True)
 
-        #  built a index dictionary to show as a filter
-        optionOfNameCampaign = list(unique_combinations_campaign)
+        delay_dataset = st.radio("Seleccione el delay del dataset", ["1 semana", "2 semanas"])
+
+        data_sw = def_delay_dataset(delay_dataset)
+        
+        unique_combinations = data_sw[["id_storeGroup","name_storeGroup","campaign_storeGroup"]].drop_duplicates(["id_storeGroup","name_storeGroup","campaign_storeGroup"])
+        optionOfNameCampaign = unique_combinations["campaign_storeGroup"].drop_duplicates().tolist()
 
         opciones_seleccionadas = st.selectbox("Filtre por nombre de campaña:", optionOfNameCampaign)
         unique_combinationsStore = unique_combinations.query(f"campaign_storeGroup in @opciones_seleccionadas")
-
         index_storeGroup = {}
         for index, row in unique_combinationsStore.iterrows():
             nueva_key=str(row["id_storeGroup"])+' - ' + row['name_storeGroup']
@@ -76,7 +82,7 @@ def main():
         temp_index_storeGroup = dict(index_storeGroup)
 
         for key, value in temp_index_storeGroup.items():
-            if data_sw.query(f"id_storeGroup == {value}").groupby("yearweek_campaign").sum().reset_index().shape[0] < 6:
+            if data_sw.query(f"id_storeGroup == {value}").groupby("yearweek_campaign").sum().reset_index().shape[0] <= 0:
                 index_storeGroup.pop(key)
         
         if index_storeGroup == {}:
@@ -88,11 +94,9 @@ def main():
             opciones = ['Semanal', 'Mes']
             filtros_seleccionados = st.radio('Seleccione la granularidad de tiempo:', opciones)
             numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
-        
-
 
         if index_storeGroup != {}:
-            filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}") 
+            filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}")
             min_value_calculated=min(filter_data_storeGroup['yearweek_campaign'])
             max_value_calculated=max(filter_data_storeGroup['yearweek_campaign'])
             selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
