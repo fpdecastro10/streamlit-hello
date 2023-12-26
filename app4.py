@@ -41,6 +41,7 @@ else:
 
 list_campaing_store_group = data_sw["campaign"].unique().tolist()
 list_campaing_store_group_new_client = df_sales_storeGroup.query("campaign_storeGroup not in @list_campaing_store_group")["campaign_storeGroup"].unique().tolist()
+list_campaing_store_group_new_client.append("PCT_STAGEI")
 
 unique_combinations = data_sw[[
                             "store_group_id",
@@ -221,7 +222,6 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         # st.write(dict_tablaMedio_sum_avg)
 
 
-
 def coefficient_tabla_medio(storeGroup_id):
     df_storeGroup_id = data_sw.query(f"store_group_id == {storeGroup_id} & sales > 0")
     df_tablaMedio_ISOweek = df_storeGroup_id.groupby([
@@ -262,6 +262,7 @@ def third_percent():
     df_accumulator = pd.DataFrame()
     for storeGroup in list_storeGroups_id:
         dict_coeff_storesGroups = coefficient_tabla_medio(storeGroup)
+        # print(dict_coeff_storesGroups)
         result_dict = pd.Series(dict_coeff_storesGroups[storeGroup],name=storeGroup)
         df_accumulator = pd.concat([df_accumulator, result_dict.to_frame().T], ignore_index=False)
     
@@ -298,8 +299,6 @@ def new_client(camaping_new_client,investment, window_time):
         del dict_of_avg_alpha_coefs['alpha']
     
     dict_of_avg_alpha_coefs_shares = share_dict(dict_of_avg_alpha_coefs)
-
-    st.write(dict_of_avg_alpha_coefs_shares)
     
     df_filter_by_camp_time["Store Group"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
     df_filter_by_camp_time = df_filter_by_camp_time.groupby("Store Group").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
@@ -319,18 +318,18 @@ def new_client(camaping_new_client,investment, window_time):
     pie_graph(df_filter_by_camp_time,"Store Group","investment","Distribución del budget total por Store Group")
 
     growing_dict = {"% Crecimiento":[], "Inversión": []}
-    total_growing = sum(dict_of_avg_alpha_coefs_shares.values())
+    total_growing = sum(dict_of_avg_alpha_coefs.values())
     denominator_to_calculate = 0
-    for key, value in dict_of_avg_alpha_coefs_shares.items():
+    for key, value in dict_of_avg_alpha_coefs.items():
         denominator_to_calculate += (value/total_growing) * value
-    st.write(denominator_to_calculate)
-    for x in [2,5,10]:
-        growing_dict["% Crecimiento"].append(x)
-        growing_dict["Inversión"].append(x/denominator_to_calculate)
+    
+    suma_total = np.mean(df_filter_by_camp_time['sales'])
+    
+    user_input_number = st.number_input("Ingresa un número:", min_value=0.0,value=2.0)
+    calculate_of_growing = round(((user_input_number/(100*52))*suma_total) /denominator_to_calculate)
 
-    st.markdown(dataframe_to_markdown(pd.DataFrame(growing_dict)),unsafe_allow_html=True)
-        
-
+    st.markdown("<h3>Simulación de crecimiento</h3>",unsafe_allow_html=True)
+    st.markdown(f"Si el crecimiento deseado es del <b>{user_input_number}</b> % anual, la inversión semanal en medios sugerida debería ser: ${calculate_of_growing}",unsafe_allow_html=True)
 
 
 def main():
