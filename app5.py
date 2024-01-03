@@ -180,7 +180,7 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         list_tabla_medio = df_filter_storeGroups["tabla_medio"].unique().tolist()
         dict_tablaMedio_sum_avg = {}
         for medio in list_tabla_medio:
-            list_tabla_medio_cost_convertion = df_filter_storeGroups[["tabla_medio","cost_convertion"]].query(f"tabla_medio in {[medio]}")["cost_convertion"]
+            list_tabla_medio_cost_convertion = (df_filter_storeGroups[["tabla_medio","cost_convertion"]].query(f"tabla_medio in {[medio]}")["cost_convertion"])**(-1)
             sum_medio = np.sum(list_tabla_medio_cost_convertion)
             avg_medio = np.mean(list_tabla_medio_cost_convertion)
             dict_tablaMedio_sum_avg[medio] = {"sum":sum_medio,"avg":avg_medio}
