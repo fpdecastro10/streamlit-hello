@@ -3,7 +3,7 @@ import streamlit as st
 def main():
     st.title("Seleccione el tipo de predicción que desea realizar:")
     # app_selection = st.selectbox("",["Producto con historial de asignación","Productos nuevos","Stores con tendencia negativa","Distribución por campaña"])
-    app_selection = st.selectbox("",["Producto con historial de asignación","Productos nuevos","Stores con tendencia negativa","Distribución de budget"])
+    app_selection = st.selectbox("",["Producto con historial de asignación","Productos nuevos","Stores con tendencia negativa","Stores con tendencia positiva","Distribución de budget"])
 
     if app_selection == "Producto con historial de asignación":
         # Ejecutar la primera aplicación
@@ -16,10 +16,13 @@ def main():
     elif app_selection == "Stores con tendencia negativa":
         from app3 import main as app3_main
         app3_main()
-    else:
-        # from app5_copy import main as app5_main
+    elif app_selection == "Stores con tendencia positiva":
         from app4 import main as app4_main
         app4_main()
+    else:
+        # from app5_copy import main as app5_main
+        from app5 import main as app5_main
+        app5_main()
 
 if __name__ == "__main__":
     main()
