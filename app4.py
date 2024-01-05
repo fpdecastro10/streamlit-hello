@@ -111,7 +111,6 @@ def main():
     negative_tendecy_of_stores = dataset_after_filter_sorted_by_store_and_time_window[["ISOweek","sales"]]
 
     boundaries = dict(negative_tendecy_of_stores['sales'].describe())
-    
     df_25 =  negative_tendecy_of_stores.query(f"sales <= {boundaries['25%']}")
     df_50 =  negative_tendecy_of_stores.query(f"{boundaries['25%']} < sales & sales <= {boundaries['75%']}")
     df_75 =  negative_tendecy_of_stores.query(f"{boundaries['75%']} < sales")
@@ -135,9 +134,9 @@ def main():
     # negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="Treg",color="red",legend=False,ax=ax)
     
     plt.scatter(negative_tendecy_of_stores['ISOweek'],negative_tendecy_of_stores['Treg'], color='#F5FCCD')
-    plt.scatter(df_25['ISOweek'],df_25['sales'],color='#C70039',label='sales<=25')
-    plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25<sales<=75')
-    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75>sales')
+    plt.scatter(df_25['ISOweek'],df_25['sales'],color='#C70039',label='sales<=25%')
+    plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25%<sales<=75%')
+    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75%>sales')
 
     ISOweek_negative_tendecy = list(negative_tendecy_of_stores["ISOweek"].unique())
     num_ticks = 6
@@ -149,7 +148,35 @@ def main():
     plt.legend()
     st.markdown("<h3 style='text-align:center'>Top 10 stores con mayor tendencia positiva dentro del Store Group seleccionado</h3>", unsafe_allow_html=True)
     df_stores.drop(columns='stores',inplace=True)
-    df_stores_formated = df_stores.to_html(index=False).replace("<td>","<td style='text-align:center'>").replace("<table border='1' class='dataframe'>","<table border='1' class='dataframe' sytle='margin:auto'>").replace("<th>","<th style='text-align:center'>")
+    
+
+    # HTML, CSS, y JavaScript para el efecto de hover con mensaje emergente
+    hover_effect_with_popup = """
+        <style>
+            /* Estilos para el enlace */
+            .enlace {
+                position: relative;
+            }
+
+            /* Estilos para el hover */
+            .enlace:hover::after {
+                content: 'Cantidad de unidades marginales por semana'; /* Contenido del mensaje emergente */
+                position: absolute;
+                background-color: #555;
+                color: #fff;
+                padding: 5px;
+                border-radius: 5px;
+                top: -30px; /* Ajusta la posición del mensaje emergente */
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1;
+            }
+        </style>
+    """
+
+    # App layout
+    st.markdown(hover_effect_with_popup, unsafe_allow_html=True)
+    df_stores_formated = df_stores.to_html(index=False).replace("<td>","<td style='text-align:center'>").replace("<table border='1' class='dataframe'>","<table border='1' class='dataframe' sytle='margin:auto'>").replace("<th>","<th style='text-align:center'>").replace("Tendencia de venta","<span class='enlace'>Tendencia de ventas &#9432</span>")
     st.markdown(df_stores_formated,unsafe_allow_html=True)
 
     csv_data = df_stores.to_csv(index=False)

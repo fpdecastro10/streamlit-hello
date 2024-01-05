@@ -19,7 +19,7 @@ def main():
     elif app_selection == "Stores con tendencia positiva":
         from app4 import main as app4_main
         app4_main()
-    else:
+    elif app_selection == "Distribución de budget":
         # from app5_copy import main as app5_main
         from app5 import main as app5_main
         app5_main()
