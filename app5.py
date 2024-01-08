@@ -181,7 +181,7 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         list_tabla_medio = df_filter_storeGroups["tabla_medio"].unique().tolist()
         dict_tablaMedio_sum_avg = {}
         for medio in list_tabla_medio:
-            list_tabla_medio_cost_convertion = (df_filter_storeGroups[["tabla_medio","cost_convertion"]].query(f"tabla_medio in {[medio]}")["cost_convertion"])**(-1)
+            list_tabla_medio_cost_convertion = df_filter_storeGroups[["tabla_medio","cost_convertion"]].query(f"tabla_medio in {[medio]}")["cost_convertion"]
             sum_medio = np.sum(list_tabla_medio_cost_convertion)
             avg_medio = np.mean(list_tabla_medio_cost_convertion)
             dict_tablaMedio_sum_avg[medio] = {"sum":sum_medio,"avg":avg_medio}
@@ -190,15 +190,13 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         for key, value in dict_tablaMedio_sum_avg.items():
             total += value["sum"]
         for key, value in dict_tablaMedio_sum_avg.items():
-            dict_tablaMedio_sum_avg[key]["per"] = dict_tablaMedio_sum_avg[key]["sum"]/total
+            dict_tablaMedio_sum_avg[key]["per"] = 1 - dict_tablaMedio_sum_avg[key]["sum"]/total
         
         df_sales_filter_by_date_list_StoreGroup = data_sales_stores.query(f"campaign_storeGroup in @list_seleceted_stores and {selected_time[0]} <= ISOweek and ISOweek <= {selected_time[1]}")
         df_sales_filter_by_date_list_StoreGroup["Store Group"] = df_sales_filter_by_date_list_StoreGroup["id_storeGroup"].astype(str) + " - " + df_sales_filter_by_date_list_StoreGroup["name_storeGroup"]
         storeGroupList = df_sales_filter_by_date_list_StoreGroup["Store Group"].unique().tolist()
         storeGroupSelected = st.multiselect("Seleccione un store group que desea excluir en la distribución",storeGroupList)
         df_sales_filter_by_date_list_StoreGroup = df_sales_filter_by_date_list_StoreGroup.query("`Store Group` not in @storeGroupSelected")
-
-        print(dict_tablaMedio_sum_avg)
 
         for medio in list_tabla_medio:
             percentage = round(input_number * dict_tablaMedio_sum_avg[medio]["per"])
