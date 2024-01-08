@@ -32,6 +32,8 @@ plt.style.use({
 })
 
 data_sw = pd.read_csv("datasetCampignSales.csv")
+data_sw["concat_store_group_name"] = data_sw["store_group_id"].astype(str) + " - " + data_sw["name_storeGroup"]
+
 data_sales_stores = pd.read_csv("dataset_2_Week_later_salesmorethan0.csv")
 if 'df_sales_storeGroup' in  st.session_state:
     df_sales_storeGroup = st.session_state.df_sales_storeGroup
@@ -169,8 +171,7 @@ def first_approach(storeGroup_id):
 
 def second_approach(input_number,list_seleceted_stores, selected_time,bool_execute):
     if bool_execute:
-        if selected_time[0] != selected_time[1]:
-            
+        if selected_time[0] != selected_time[1]:            
             df_filter_by_time = data_sw.query(f"{selected_time[0]} <= ISOweek and ISOweek <= {selected_time[1]}").copy()
         else:
             df_filter_by_time = data_sw.copy()
@@ -196,6 +197,8 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         storeGroupList = df_sales_filter_by_date_list_StoreGroup["Store Group"].unique().tolist()
         storeGroupSelected = st.multiselect("Seleccione un store group que desea excluir en la distribución",storeGroupList)
         df_sales_filter_by_date_list_StoreGroup = df_sales_filter_by_date_list_StoreGroup.query("`Store Group` not in @storeGroupSelected")
+
+        print(dict_tablaMedio_sum_avg)
 
         for medio in list_tabla_medio:
             percentage = round(input_number * dict_tablaMedio_sum_avg[medio]["per"])
@@ -257,15 +260,14 @@ def coefficient_tabla_medio(storeGroup_id):
 
     return dict_result
 
-def third_percent():
-    list_storeGroups_id = data_sw["store_group_id"].unique().tolist()
+def third_percent(selectedGroup):
+    list_storeGroups_id = data_sw.query("concat_store_group_name in @selectedGroup")["store_group_id"].unique().tolist()
     df_accumulator = pd.DataFrame()
     for storeGroup in list_storeGroups_id:
         dict_coeff_storesGroups = coefficient_tabla_medio(storeGroup)
-        # print(dict_coeff_storesGroups)
         result_dict = pd.Series(dict_coeff_storesGroups[storeGroup],name=storeGroup)
         df_accumulator = pd.concat([df_accumulator, result_dict.to_frame().T], ignore_index=False)
-    
+
     medio_avg = {}
     for column in df_accumulator.columns:
         serie_column = df_accumulator[column]
@@ -286,17 +288,13 @@ def pie_graph(df,columnsx,columnsy,title):
     st.plotly_chart(fig)
 
 
-def new_client(camaping_new_client,investment, window_time):
+def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
     df_filter_by_camp = df_sales_storeGroup.query(f"campaign_storeGroup in @camaping_new_client")
     df_filter_by_camp_time = df_filter_by_camp.query(f"{window_time[0]} < ISOweek and ISOweek < {window_time[1]}")
     # Filter the original dataset by the campaign and time window
     
-    if "dict_of_avg_alpha_coefs" in st.session_state:
-        dict_of_avg_alpha_coefs = st.session_state.dict_of_avg_alpha_coefs
-    else:
-        st.session_state.dict_of_avg_alpha_coefs = third_percent()
-        dict_of_avg_alpha_coefs = st.session_state.dict_of_avg_alpha_coefs
-        del dict_of_avg_alpha_coefs['alpha']
+    dict_of_avg_alpha_coefs = third_percent(selectedStoreGroups)
+    del dict_of_avg_alpha_coefs['alpha']
     
     dict_of_avg_alpha_coefs_shares = share_dict(dict_of_avg_alpha_coefs)
     
@@ -345,6 +343,11 @@ def main():
             camaping_new_client = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group_new_client)
             serie_ISOweek = df_sales_storeGroup.query("campaign_storeGroup in @camaping_new_client")["ISOweek"]
             min_date, max_date = min(serie_ISOweek), max(serie_ISOweek)
+            list_store_group_coeff = ["Seleccionar todos"]
+            list_store_group_coeff += data_sw['concat_store_group_name'].unique().tolist() 
+            selection_storeGroups = st.multiselect("Seleccione un store group que desea incluir en la distribución",list_store_group_coeff)
+            if "Seleccionar todos" in selection_storeGroups:
+                selection_storeGroups = data_sw['concat_store_group_name'].unique().tolist()
             investment_in_media = st.number_input("Inversión en medios:",min_value=0)
             window_time = st.slider(
                 "Seleccione la ventana temporal de referencia para el cálculo de distribución",
@@ -366,8 +369,8 @@ def main():
 
 
     if type_of_client == "Cliente Nuevo":
-        if investment_in_media > 0:
-            new_client(camaping_new_client,investment_in_media, window_time)
+        if investment_in_media > 0 and selection_storeGroups != []:
+            new_client(camaping_new_client,investment_in_media, window_time, selection_storeGroups)
         else:
             st.write("Debe ingresar un monto a invertir")
     else:

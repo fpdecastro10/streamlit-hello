@@ -149,7 +149,6 @@ def main():
     st.markdown("<h3 style='text-align:center'>Top 10 stores con mayor tendencia positiva dentro del Store Group seleccionado</h3>", unsafe_allow_html=True)
     df_stores.drop(columns='stores',inplace=True)
     
-
     # HTML, CSS, y JavaScript para el efecto de hover con mensaje emergente
     hover_effect_with_popup = """
         <style>
