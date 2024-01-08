@@ -195,7 +195,7 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         df_sales_filter_by_date_list_StoreGroup = data_sales_stores.query(f"campaign_storeGroup in @list_seleceted_stores and {selected_time[0]} <= ISOweek and ISOweek <= {selected_time[1]}")
         df_sales_filter_by_date_list_StoreGroup["Store Group"] = df_sales_filter_by_date_list_StoreGroup["id_storeGroup"].astype(str) + " - " + df_sales_filter_by_date_list_StoreGroup["name_storeGroup"]
         storeGroupList = df_sales_filter_by_date_list_StoreGroup["Store Group"].unique().tolist()
-        storeGroupSelected = st.multiselect("Seleccione un store group que desea excluir en la distribución",storeGroupList)
+        storeGroupSelected = st.multiselect("Seleccione los store groups que desea incluir en la regresión que estima la distribución",storeGroupList)
         df_sales_filter_by_date_list_StoreGroup = df_sales_filter_by_date_list_StoreGroup.query("`Store Group` not in @storeGroupSelected")
 
         for medio in list_tabla_medio:
