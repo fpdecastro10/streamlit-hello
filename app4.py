@@ -104,7 +104,7 @@ def main():
 
         stores_filter = df_stores["Store id"]    
         relations_storesDB_storeId = df_stores[["stores","Store id"]].drop_duplicates(["stores","Store id"])
-        store_selected = st.selectbox("Stores con tendencia negativa:", stores_filter)
+        store_selected = st.selectbox("Stores con tendencia positiva:", stores_filter)
         store_selected_filter = relations_storesDB_storeId.query(f"`Store id` == {store_selected}")["stores"].unique()[0]
 
     dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected_filter} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
@@ -112,8 +112,8 @@ def main():
 
     boundaries = dict(negative_tendecy_of_stores['sales'].describe())
     df_25 =  negative_tendecy_of_stores.query(f"sales <= {boundaries['25%']}")
-    df_50 =  negative_tendecy_of_stores.query(f"{boundaries['25%']} < sales & sales <= {boundaries['75%']}")
-    df_75 =  negative_tendecy_of_stores.query(f"{boundaries['75%']} < sales")
+    df_50 =  negative_tendecy_of_stores.query(f"{boundaries['25%']} < sales & sales < {boundaries['75%']}")
+    df_75 =  negative_tendecy_of_stores.query(f"{boundaries['75%']} <= sales")
 
     retailer_name = dataset_after_filter_sorted_by_store_and_time_window['retailer_name'].unique()[0]
 
@@ -135,8 +135,8 @@ def main():
     
     plt.scatter(negative_tendecy_of_stores['ISOweek'],negative_tendecy_of_stores['Treg'], color='#F5FCCD')
     plt.scatter(df_25['ISOweek'],df_25['sales'],color='#C70039',label='sales<=25%')
-    plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25%<sales<=75%')
-    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75%>sales')
+    plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25%<sales<75%')
+    plt.scatter(df_75['ISOweek'],df_75['sales'],color='#F8DE22',label='75%>=sales')
 
     ISOweek_negative_tendecy = list(negative_tendecy_of_stores["ISOweek"].unique())
     num_ticks = 6
