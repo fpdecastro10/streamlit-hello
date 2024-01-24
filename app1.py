@@ -101,6 +101,8 @@ def main():
             max_value_calculated=max(filter_data_storeGroup['yearweek_campaign'])
             selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
 
+        free_grades = st.number_input("Ingrese el número de grados de la regresión", value=2)
+
     if index_storeGroup != {}:
         # Configuración de la aplicación
         st.markdown('<h1 style="text-align: center;">Costo de campaña vs Sales por Store group</h1>', unsafe_allow_html=True)
@@ -119,7 +121,7 @@ def main():
         filtered_data_product_store = filter_data_storeGroup.groupby(['id_sku','id_store_retailer','name_retailer']).sum().reset_index()[['id_sku', 'id_store_retailer','name_retailer', 'sales']]
         filtered_data_product_store['share'] = filtered_data_product_store['sales']/total_sales
 
-        d = np.polyfit(filtered_data['cost_campaign'],filtered_data['sales'],2)
+        d = np.polyfit(filtered_data['cost_campaign'],filtered_data['sales'],free_grades)
         f = np.poly1d(d)
         filtered_data.insert(1,'Treg',f(filtered_data['cost_campaign']))
 
