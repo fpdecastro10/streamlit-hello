@@ -128,47 +128,6 @@ def graph_tablaMedio_sales(df,tabla_medio_list,storeGroupId):
     st.pyplot(plt)
 
 
-def first_approach(storeGroup_id):
-    df_storeGroup_id = data_sw.query(f"store_group_id == {storeGroup_id}")
-
-    df_tablaMedio_ISOweek = df_storeGroup_id.groupby([
-        "store_group_id",
-        "tabla_medio",
-        "ISOweek"
-        ]).agg({
-            'cost': 'sum',
-            'sales': 'mean' }).reset_index()
-
-    unique_tablaMedio = df_tablaMedio_ISOweek["tabla_medio"].unique().tolist()
-
-    df_tablaMedio_listCost = df_builder_tablaMedio(df_tablaMedio_ISOweek)
-    
-    X = df_tablaMedio_listCost[unique_tablaMedio]
-    y = df_tablaMedio_listCost["sales"]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=0)
-    model = RandomForestRegressor(random_state=1)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
-    
-    model_test = sm.OLS(y, X).fit()
-    summary = model_test.summary()
-    
-    st.markdown(f"<p>Nuestro modelo explica el <b>{round(model_test.rsquared,2)}%</b> de las ventas con respecto a los inputs de {concatenar_strings(unique_tablaMedio)}</p>",unsafe_allow_html=True)
-
-    reg = LinearRegression().fit(X, y)
-    alpha = reg.intercept_
-    coefs = reg.coef_
-    st.markdown(f"<h4>Venta de base promedio <b>{round(alpha,2)}</b></h4>",unsafe_allow_html=True)
-
-    for medio in range(len(unique_tablaMedio)):
-        string_medio = re.sub(r'\bWeekly\b', '', unique_tablaMedio[medio])
-        st.markdown(f"<h4>Si gastamos $100 en {string_medio}, esperamos tener una venta adicional de {round(coefs[medio]*100)} unidades</h4>",unsafe_allow_html=True)
-
-    graph_dataset_ISOweek_sales(df_tablaMedio_listCost,'ISOweek','sales',storeGroup_id)
-    graph_tablaMedio_sales(df_tablaMedio_listCost,unique_tablaMedio,storeGroup_id)
-
-
 def second_approach(input_number,list_seleceted_stores, selected_time,bool_execute):
     if bool_execute:
         if selected_time[0] != selected_time[1]:            
@@ -223,55 +182,74 @@ def second_approach(input_number,list_seleceted_stores, selected_time,bool_execu
         # st.write(dict_tablaMedio_sum_avg)
 
 
-def coefficient_tabla_medio(storeGroup_id):
-    df_storeGroup_id = data_sw.query(f"store_group_id == {storeGroup_id} & sales > 0")
-    df_tablaMedio_ISOweek = df_storeGroup_id.groupby([
-        "store_group_id",
-        "tabla_medio",
-        "ISOweek"
-        ]).agg({
-            'cost': 'sum',
-            'sales': 'mean' }).reset_index()
-    
-    unique_tablaMedio = df_tablaMedio_ISOweek["tabla_medio"].unique().tolist()
-
-    df_tablaMedio_listCost = df_builder_tablaMedio(df_tablaMedio_ISOweek)
-    df_tablaMedio_listCost =df_tablaMedio_listCost.dropna()
-    unique_tablaMedio_sales = unique_tablaMedio + ["sales"]
-    z_scores = zscore(df_tablaMedio_listCost[unique_tablaMedio_sales])
-    threshold = 2
-
-    outliers = (abs(z_scores) > threshold).all(axis=1)
-    df_tablaMedio_listCost = df_tablaMedio_listCost[~outliers]
-
-    X = df_tablaMedio_listCost[unique_tablaMedio]
-    y = df_tablaMedio_listCost["sales"]
-    
-    reg = LinearRegression().fit(X, y)
-    alpha = reg.intercept_
-    coefs = reg.coef_
-
-    dict_result = {}
-    dict_result[storeGroup_id] = {'alpha':alpha}
-    for medio in range(len(unique_tablaMedio)):
-        dict_result[storeGroup_id][f"coefs_{unique_tablaMedio[medio]}".replace(" ","_")] = coefs[medio]/alpha
-
-    return dict_result
-
 def third_percent(selectedGroup):
-    list_storeGroups_id = data_sw.query("concat_store_group_name in @selectedGroup")["store_group_id"].unique().tolist()
+    list_storeGroups_id = data_sw.query("concat_store_group_name in @selectedGroup")["concat_store_group_name"].unique().tolist()
     df_accumulator = pd.DataFrame()
-    for storeGroup in list_storeGroups_id:
-        dict_coeff_storesGroups = coefficient_tabla_medio(storeGroup)
-        result_dict = pd.Series(dict_coeff_storesGroups[storeGroup],name=storeGroup)
-        df_accumulator = pd.concat([df_accumulator, result_dict.to_frame().T], ignore_index=False)
+    dict_result = {}
 
-    medio_avg = {}
-    for column in df_accumulator.columns:
-        serie_column = df_accumulator[column]
-        serie_positive = serie_column > 0
-        medio_avg[column] = np.mean(serie_column[serie_positive])
-    return medio_avg
+    for store in list_storeGroups_id:
+        # df_storeGroup_id = data_sw.query(f"concat_store_group_name in @list_storeGroup  & sales > 0")
+        df_storeGroup_id = data_sw[data_sw["concat_store_group_name"] == store].query("sales > 0")
+
+        z = np.abs(zscore(df_storeGroup_id['cpc'])) 
+        
+        series_outliers = pd.Series(z<2.5)
+        df_storeGroup_id = df_storeGroup_id[series_outliers]
+        # display(df_storeGroup_id)
+
+        df_tablaMedio_ISOweek = df_storeGroup_id.groupby([
+            "store_group_id",
+            "tabla_medio",
+            "ISOweek"
+            ]).agg({
+                'cost': 'sum',
+                'sales': 'mean' }).reset_index()
+        
+        unique_tablaMedio = df_tablaMedio_ISOweek["tabla_medio"].unique().tolist()
+        df_tablaMedio_listCost = df_builder_tablaMedio(df_tablaMedio_ISOweek)
+
+        df_tablaMedio_listCost =df_tablaMedio_listCost.dropna()
+        unique_tablaMedio_sales = unique_tablaMedio + ["sales"]
+        z_scores = zscore(df_tablaMedio_listCost[unique_tablaMedio_sales])
+        threshold = 2
+
+        outliers = (abs(z_scores) > threshold).all(axis=1)
+        df_tablaMedio_listCost = df_tablaMedio_listCost[~outliers]
+
+        X = df_tablaMedio_listCost[unique_tablaMedio].copy()
+        y = df_tablaMedio_listCost["sales"]
+        
+
+        # Mostrar el gráfico
+
+        if X.shape[0] > 20:
+
+            reg = LinearRegression().fit(X, y)
+            alpha = reg.intercept_
+            coefs = reg.coef_
+
+            dict_pvalues = dict(sm.OLS(y, X).fit().pvalues)
+
+            df_copia = X.copy()
+            for key, value in dict_pvalues.items():
+                if value > 0.05:
+                    df_copia = df_copia.drop(key, axis=1)
+            
+
+            if df_copia.empty:
+                continue
+
+            reg = LinearRegression().fit(df_copia, y)
+            alpha = reg.intercept_
+            coefs = reg.coef_
+
+            coeff_name = df_copia.columns.tolist()
+            dict_coeff = {}
+            for coeff in range(len(df_copia.columns)):
+                dict_coeff[f"coeff_{coeff_name[coeff]}".replace(" ","_")] = coefs[coeff]/alpha
+            dict_result[store] = dict_coeff
+    
+    return dict_result
 
 def share_dict(dict_of_avg_alpha_coefs):
     total_value = sum(dict_of_avg_alpha_coefs.values())
@@ -292,15 +270,26 @@ def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
     # Filter the original dataset by the campaign and time window
     
     dict_of_avg_alpha_coefs = third_percent(selectedStoreGroups)
-    del dict_of_avg_alpha_coefs['alpha']
+
+    dict_coeff_list = {}
+    for key, items in dict_of_avg_alpha_coefs.items():
+        for key, items in items.items():
+            if key in dict_coeff_list:
+                dict_coeff_list[key].append(items)
+            else:
+                dict_coeff_list[key] = [items]
     
-    dict_of_avg_alpha_coefs_shares = share_dict(dict_of_avg_alpha_coefs)
+    for key, items in dict_coeff_list.items():
+        dict_coeff_list[key] = np.mean(items)
+
+    dict_of_avg_alpha_coefs_shares = share_dict(dict_coeff_list)
     
     df_filter_by_camp_time["Store Group"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
     df_filter_by_camp_time = df_filter_by_camp_time.groupby("Store Group").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
     df_filter_by_camp_time["per tiendas"] = df_filter_by_camp_time['id_store_retailer'] / df_filter_by_camp_time['id_store_retailer'].sum() * 100
     df_filter_by_camp_time["per sales"] = df_filter_by_camp_time['sales'] / df_filter_by_camp_time['sales'].sum() * 100
     df_filter_by_camp_time["KPI"] =  df_filter_by_camp_time["per sales"] / df_filter_by_camp_time["per tiendas"]
+
     for key, value in dict_of_avg_alpha_coefs_shares.items():
         key_str = key.replace("coefs_","").replace("_Weekly","")
         value_to_invest = round(value*investment)
@@ -314,18 +303,17 @@ def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
     pie_graph(df_filter_by_camp_time,"Store Group","investment","Distribución del budget total por Store Group")
 
     growing_dict = {"% Crecimiento":[], "Inversión": []}
-    total_growing = sum(dict_of_avg_alpha_coefs.values())
+    total_growing = sum(dict_coeff_list.values())
+
     denominator_to_calculate = 0
-    for key, value in dict_of_avg_alpha_coefs.items():
+    for key, value in dict_coeff_list.items():
         denominator_to_calculate += (value/total_growing) * value
-    
-    suma_total = np.mean(df_filter_by_camp_time['sales'])
-    
+
     user_input_number = st.number_input("Ingresa un número:", min_value=0.0,value=2.0)
-    calculate_of_growing = round(((user_input_number/(100*52))*suma_total) /denominator_to_calculate)
+    calculate_of_growing = round(user_input_number/denominator_to_calculate)
 
     st.markdown("<h3>Simulación de crecimiento</h3>",unsafe_allow_html=True)
-    st.markdown(f"Si el crecimiento deseado es del <b>{user_input_number}</b> % anual, la inversión semanal en medios sugerida debería ser: ${calculate_of_growing}",unsafe_allow_html=True)
+    st.markdown(f"Para un aumento del <b>{user_input_number}</b> % semanal con respecto al promedio de ventas historico, la inversión en medios sugerida debería ser: ${calculate_of_growing} semanal",unsafe_allow_html=True)
 
 
 def main():
@@ -334,6 +322,8 @@ def main():
         imagen_local='./logo2x.png'
         st.image(imagen_local, use_column_width=True)
         st.markdown('<h1 style="font-size: 34px;">Filtros </h1>', unsafe_allow_html=True)
+
+        selection_radio = st.radio("Seleccion con cuantas semanas de delay quiere hacer la prediccion",["1 semana","2 semanas"])
 
         type_of_client = st.selectbox("Tipo de cliente:", ["Cliente Nuevo","Cliente con Historial"])
 
@@ -372,6 +362,7 @@ def main():
         else:
             st.write("Debe ingresar un monto a invertir")
     else:
+
         if investment_in_media > 0:
             
             second_approach(investment_in_media,selected_option,selected_time,True)
