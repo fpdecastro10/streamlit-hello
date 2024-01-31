@@ -99,7 +99,14 @@ def main():
             filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}")
             min_value_calculated=min(filter_data_storeGroup['yearweek_campaign'])
             max_value_calculated=max(filter_data_storeGroup['yearweek_campaign'])
-            selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+            
+            # selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+            
+            start_date, end_date = st.select_slider(
+                "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
+                options=filter_data_storeGroup["yearweek_campaign"],
+                value=(min_value_calculated, max_value_calculated)
+            )
 
         free_grades = st.number_input("Ingrese el número de grados de la regresión", value=2)
 
@@ -110,7 +117,7 @@ def main():
         filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}") 
         
         filtered_data = filter_data_storeGroup.groupby("yearweek_campaign").agg({'sales': 'sum', 'cost_campaign': 'mean'}).reset_index()
-        promedio_ventas = np.mean(filtered_data.query(f"{selected_time[0]} < yearweek_campaign and yearweek_campaign < {selected_time[1]} ")['sales'])
+        promedio_ventas = np.mean(filtered_data.query(f"{start_date} < yearweek_campaign and yearweek_campaign < {end_date} ")['sales'])
 
         # Constuimos el data frame con sku_id
         filtered_data_product = filter_data_storeGroup.groupby(["id_sku","name_product"]).sum().reset_index()[['id_sku', 'name_product','sales']]
@@ -156,7 +163,7 @@ def main():
                 </h2>''',unsafe_allow_html=True )
             st.markdown(f'''
                 <h2 style=color:#f7dc00> Crecimiento esperado:
-                    <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,1)}%</b> vs venta promedio {filtros_seleccionados} de <b>{round(promedio_ventas)}</b> un (período del {selected_time[0]} al {selected_time[1]})
+                    <p style="color:#ffffff;font-size:2rem;margin-top:10px"><b>{round(((ventas_totales-promedio_ventas)/promedio_ventas)*100,1)}%</b> vs venta promedio {filtros_seleccionados} de <b>{round(promedio_ventas)}</b> un (período del {start_date} al {end_date})
                     </p>
                 </h2>''',unsafe_allow_html=True)
             filtered_data_product['share_sales'] = round(filtered_data_product['share']*ventas_totales)
