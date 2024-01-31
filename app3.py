@@ -61,10 +61,18 @@ def main():
         
         dataset_after_filter_sorted = dataset_after_filter.sort_values(by="ISOweek")
 
-        min_value_calculated=min(dataset_after_filter['ISOweek'])
-        max_value_calculated=max(dataset_after_filter['ISOweek'])
-        selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
+        min_value_calculated=min(dataset_after_filter_sorted['ISOweek'])
+        max_value_calculated=max(dataset_after_filter_sorted['ISOweek'])
+
+        # selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
         
+        start_date, end_date = st.select_slider(
+            "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
+            options=dataset_after_filter_sorted["ISOweek"],
+            value=(min_value_calculated, max_value_calculated)
+        )
+
+
         stores_id = list(dataset_after_filter["id_store_retailer"].unique())
         stores_list = []
         stores_id_list = []
@@ -74,7 +82,7 @@ def main():
         week_with_cero_sales = []
 
         for store in stores_id:
-            dataset_after_filter_sorted_by_store = dataset_after_filter_sorted.query(f"id_store_retailer == {store} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+            dataset_after_filter_sorted_by_store = dataset_after_filter_sorted.query(f"id_store_retailer == {store} and {start_date} < ISOweek and ISOweek < {end_date}")
             y = list(dataset_after_filter_sorted_by_store["ISOweek"])
             x = list(dataset_after_filter_sorted_by_store["sales"])
             if not all(elemento == 0 for elemento in x):
@@ -107,7 +115,7 @@ def main():
         store_selected = st.selectbox("Stores con tendencia negativa:", stores_filter)
         store_selected_filter = relations_storesDB_storeId.query(f"`Store id` == {store_selected}")["stores"].unique()[0]
 
-    dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected_filter} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+    dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected_filter} and {start_date} < ISOweek and ISOweek < {end_date}")
     negative_tendecy_of_stores = dataset_after_filter_sorted_by_store_and_time_window[["ISOweek","sales"]]
 
     boundaries = dict(negative_tendecy_of_stores['sales'].describe())

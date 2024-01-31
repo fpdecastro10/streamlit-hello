@@ -65,6 +65,12 @@ def main():
         max_value_calculated=max(dataset_after_filter['ISOweek'])
         selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
         
+        start_date, end_date = st.select_slider(
+            "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
+            options=dataset_after_filter_sorted["ISOweek"],
+            value=(min_value_calculated, max_value_calculated)
+        )
+
         stores_id = list(dataset_after_filter["id_store_retailer"].unique())
         stores_list = []
         stores_id_list = []
@@ -74,7 +80,7 @@ def main():
         week_with_cero_sales = []
 
         for store in stores_id:
-            dataset_after_filter_sorted_by_store = dataset_after_filter_sorted.query(f"id_store_retailer == {store} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+            dataset_after_filter_sorted_by_store = dataset_after_filter_sorted.query(f"id_store_retailer == {store} and {start_date} < ISOweek and ISOweek < {end_date}")
             y = list(dataset_after_filter_sorted_by_store["ISOweek"])
             x = list(dataset_after_filter_sorted_by_store["sales"])
             if not all(elemento == 0 for elemento in x):
