@@ -134,7 +134,16 @@ def main():
 
         plt.figure(figsize=(8, 6))
         ax=filtered_data.plot.scatter(x='cost_campaign', y='sales', color='yellow')
-        filtered_data.plot.scatter(x='cost_campaign',y='Treg',color='red',legend=False,ax=ax)
+        sorted_by_Treg = filtered_data.sort_values(by='cost_campaign')
+
+        min_value = min(filtered_data['cost_campaign'])
+        max_value = max(filtered_data['cost_campaign'])
+        amounts_of_interval = 50
+        interval_values = np.linspace(min_value, max_value, amounts_of_interval)
+        result_values = [f(val) for val in interval_values]
+        function_valuated = pd.DataFrame({'cost_campaign': interval_values, 'Treg': result_values})
+
+        function_valuated.plot(x='cost_campaign',y='Treg',color='red',legend=False,ax=ax,linewidth=2.5)
 
         correlation_matrix = np.corrcoef(filtered_data["Treg"], filtered_data["sales"])
         correlation = correlation_matrix[0, 1]
