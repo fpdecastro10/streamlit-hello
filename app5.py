@@ -217,19 +217,18 @@ def third_percent(selectedGroup):
         df_tablaMedio_listCost = df_tablaMedio_listCost[~outliers]
 
         X = df_tablaMedio_listCost[unique_tablaMedio].copy()
-        y = df_tablaMedio_listCost["sales"]
         
 
         # Mostrar el gráfico
 
         if X.shape[0] > 20:
-
+            y = df_tablaMedio_listCost["sales"]
             reg = LinearRegression().fit(X, y)
             alpha = reg.intercept_
             coefs = reg.coef_
 
             dict_pvalues = dict(sm.OLS(y, X).fit().pvalues)
-
+            
             df_copia = X.copy()
             for key, value in dict_pvalues.items():
                 if value > 0.05:
