@@ -76,7 +76,7 @@ def graph_timeserie(df_store_group,name_store):
     
     ax2.plot(table_pivoted['ISOweek'], table_pivoted['sales'], label='sales',color='skyblue')
 
-    ISOweek_negative_tendecy = list(df_tablaMedio_ISOweek["ISOweek"].unique())
+    ISOweek_negative_tendecy = list(table_pivoted["ISOweek"])
     num_ticks = 5
     etiquetas_personalizadas = ISOweek_negative_tendecy[::len(ISOweek_negative_tendecy) // (num_ticks - 1)]
 
