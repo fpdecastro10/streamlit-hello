@@ -390,7 +390,7 @@ def main():
             selection_storeGroups = st.multiselect("Seleccione un store group que desea incluir en la distribución",list_store_group_coeff)
             if "Seleccionar todos" in selection_storeGroups:
                 selection_storeGroups = data_sw['concat_store_group_name'].unique().tolist()
-            investment_in_media = st.number_input("Inversión en medios:",min_value=10000)
+            investment_in_media = st.number_input("Inversión en medios:",value=1000)
             start_date, end_date = st.select_slider(
                 "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
                 options=serie_ISOweek.sort_values(),
