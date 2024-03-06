@@ -5,6 +5,8 @@ from sklearn.model_selection import train_test_split
 from app1 import dataframe_to_markdown
 from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance
 import matplotlib.pyplot as plt
+import os
+import pickle
 
 
 import pandas as pd
@@ -110,10 +112,17 @@ def arbol_regressor(store_group_name):
     ]
 
     table_prophet_index = table_prophet_sg[['ds','y']]
-    prophet = Prophet(yearly_seasonality=True)
-    prophet.fit(table_prophet_index)
-    prophet_predict = prophet.predict(table_prophet_index)
 
+    if os.path.exists(f"models/{store_group_name}.pkl"):
+        with open(f"models/{store_group_name}.pkl", 'rb') as f:
+            prophet = pickle.load(f)
+    else:
+        prophet = Prophet(yearly_seasonality=True)
+        prophet.fit(table_prophet_index)
+        with open(f"models/{store_group_name}.pkl", 'wb') as f:
+            pickle.dump(prophet, f)
+
+    prophet_predict = prophet.predict(table_prophet_index)
     final_data_store_group = table_pivoted_sg.copy().reset_index()
     final_data_store_group['trend'] = prophet_predict['trend']
     final_data_store_group['season'] = prophet_predict['yearly']
