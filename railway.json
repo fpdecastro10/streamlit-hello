@@ -4,6 +4,6 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "sudo apt update && sudo apt install -y libc6 && streamlit run main.py --server.address 0.0.0.0 --server.port $PORT --server.fileWatcherType none --browser.gatherUsageStats false --client.showErrorDetails false --client.toolbarMode minimal --theme.base dark"
+        "startCommand": "streamlit run main.py --server.address 0.0.0.0 --server.port $PORT --server.fileWatcherType none --browser.gatherUsageStats false --client.showErrorDetails false --client.toolbarMode minimal --theme.base dark"
     }
 }
