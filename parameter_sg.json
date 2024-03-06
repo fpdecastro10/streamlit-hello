@@ -1,0 +1,494 @@
+{
+    "133 - PCT_ILLINOIS": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.2234072359757418,
+            "Google Weekly": 0.5871008091776022
+        },
+        "params": {
+            "n_estimators": 97,
+            "min_samples_leaf": 1,
+            "min_samples_split": 19,
+            "max_depth": 4,
+            "ccp_alpha": 0.14556906598208114,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "134 - PCT_ARIZ": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.32555174491955585,
+            "Google Weekly": 0.6808787945000044
+        },
+        "params": {
+            "n_estimators": 15,
+            "min_samples_leaf": 1,
+            "min_samples_split": 4,
+            "max_depth": 5,
+            "ccp_alpha": 0.1698152077256736,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "101 - MS_ILLINOIS": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.22567036621097422,
+            "Google Weekly": 0.5931227183667247
+        },
+        "params": {
+            "n_estimators": 5,
+            "min_samples_leaf": 13,
+            "min_samples_split": 17,
+            "max_depth": 6,
+            "ccp_alpha": 0.244005340053178,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "102 - MS_TEXAS": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.12398422091708271,
+            "Google Weekly": 0.3061705463603727
+        },
+        "params": {
+            "n_estimators": 20,
+            "min_samples_leaf": 3,
+            "min_samples_split": 3,
+            "max_depth": 5,
+            "ccp_alpha": 0.018543886991098442,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "103 - MS_80REST": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.17574410094016094,
+            "Google Weekly": 0.7125621721855592
+        },
+        "params": {
+            "n_estimators": 55,
+            "min_samples_leaf": 6,
+            "min_samples_split": 8,
+            "max_depth": 4,
+            "ccp_alpha": 0.008403771944618266,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "126 - MS_AMAZON": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.268663808567678,
+            "Google Weekly": 0.34746646730031067
+        },
+        "params": {
+            "n_estimators": 17,
+            "min_samples_leaf": 8,
+            "min_samples_split": 15,
+            "max_depth": 5,
+            "ccp_alpha": 0.0505071941884505,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "62 - MS_TEXAS>2": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.3127868175670725,
+            "Google Weekly": 0.33000741226454366
+        },
+        "params": {
+            "n_estimators": 64,
+            "min_samples_leaf": 3,
+            "min_samples_split": 15,
+            "max_depth": 4,
+            "ccp_alpha": 0.06947293578163838,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "130 - PCT_CALIFORNIA": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.15514335051859224,
+            "Google Weekly": 0.7999545540623398
+        },
+        "params": {
+            "n_estimators": 5,
+            "min_samples_leaf": 20,
+            "min_samples_split": 6,
+            "max_depth": 7,
+            "ccp_alpha": 0.265205882927489,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "131 - PCT_TEXAS": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.3516110666641356,
+            "Google Weekly": 0.6548437001406981
+        },
+        "params": {
+            "n_estimators": 5,
+            "min_samples_leaf": 1,
+            "min_samples_split": 2,
+            "max_depth": 4,
+            "ccp_alpha": 0.13005935829406193,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "132 - PCT_FLORIDA": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.3705693798227985,
+            "Google Weekly": 0.31821204431925953
+        },
+        "params": {
+            "n_estimators": 93,
+            "min_samples_leaf": 1,
+            "min_samples_split": 3,
+            "max_depth": 5,
+            "ccp_alpha": 0.2958675758933377,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "135 - PCT_AWARENESS": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.30840467757775464,
+            "Google Weekly": 0.7622589110402429
+        },
+        "params": {
+            "n_estimators": 38,
+            "min_samples_leaf": 1,
+            "min_samples_split": 3,
+            "max_depth": 6,
+            "ccp_alpha": 0.15345218911211544,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "118 - JAL_ALLTHEREST": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 100,
+            "min_samples_leaf": 9,
+            "min_samples_split": 14,
+            "max_depth": 6,
+            "ccp_alpha": 0.13378628599101558,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "136 - JAL_CALIFORNIA": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 24,
+            "min_samples_leaf": 5,
+            "min_samples_split": 7,
+            "max_depth": 5,
+            "ccp_alpha": 0.2293022353793406,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "137 - JAL_TEXAS": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 47,
+            "min_samples_leaf": 3,
+            "min_samples_split": 7,
+            "max_depth": 7,
+            "ccp_alpha": 0.2341033971019374,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "138 - JAL_FLORIDA": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 11,
+            "min_samples_leaf": 1,
+            "min_samples_split": 3,
+            "max_depth": 6,
+            "ccp_alpha": 0.09340336868349375,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "139 - JAL_ILLINOIS": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 52,
+            "min_samples_leaf": 15,
+            "min_samples_split": 13,
+            "max_depth": 7,
+            "ccp_alpha": 0.0025723831741306658,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "140 - JAL_ORWA": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 29,
+            "min_samples_leaf": 1,
+            "min_samples_split": 9,
+            "max_depth": 5,
+            "ccp_alpha": 0.29343941606549623,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "141 - JAL_NAC": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 12,
+            "min_samples_leaf": 1,
+            "min_samples_split": 9,
+            "max_depth": 5,
+            "ccp_alpha": 0.1801157757733607,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "142 - JAL_GANPACT": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 15,
+            "min_samples_leaf": 1,
+            "min_samples_split": 3,
+            "max_depth": 6,
+            "ccp_alpha": 0.1683321535220316,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "143 - JAL_AWARENESS": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 71,
+            "min_samples_leaf": 9,
+            "min_samples_split": 20,
+            "max_depth": 6,
+            "ccp_alpha": 0.04663271099727776,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "69 - JAL_CALI<=1": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 35,
+            "min_samples_leaf": 3,
+            "min_samples_split": 3,
+            "max_depth": 4,
+            "ccp_alpha": 0.1569444054334724,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "70 - JAL_CALI>1": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 9,
+            "min_samples_leaf": 6,
+            "min_samples_split": 5,
+            "max_depth": 4,
+            "ccp_alpha": 0.22448955970754844,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "71 - JAL_TEXAS<=1": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 29,
+            "min_samples_leaf": 20,
+            "min_samples_split": 7,
+            "max_depth": 6,
+            "ccp_alpha": 0.12684119061182628,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "72 - JAL_TEXAS>1": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 78,
+            "min_samples_leaf": 6,
+            "min_samples_split": 19,
+            "max_depth": 4,
+            "ccp_alpha": 0.25389713093633287,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "73 - JAL_FLORIDA": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 23,
+            "min_samples_leaf": 4,
+            "min_samples_split": 14,
+            "max_depth": 4,
+            "ccp_alpha": 0.1877331460488811,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "74 - JAL_WINIL": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 5,
+            "min_samples_leaf": 20,
+            "min_samples_split": 19,
+            "max_depth": 7,
+            "ccp_alpha": 0.20282984330817377,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "75 - JAL_NORESTE": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 14,
+            "min_samples_leaf": 7,
+            "min_samples_split": 5,
+            "max_depth": 7,
+            "ccp_alpha": 0.01391454882499089,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "76 - JAL_WEST>0350": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 17,
+            "min_samples_leaf": 2,
+            "min_samples_split": 9,
+            "max_depth": 6,
+            "ccp_alpha": 0.2999457962939769,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "77 - JAL_CENTER>0350": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 13,
+            "min_samples_leaf": 1,
+            "min_samples_split": 3,
+            "max_depth": 4,
+            "ccp_alpha": 0.14382545112531153,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "78 - JAL_EAST>0350": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 10,
+            "min_samples_leaf": 19,
+            "min_samples_split": 3,
+            "max_depth": 7,
+            "ccp_alpha": 0.032214162957903324,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "79 - JAL_AWARENESS": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 6,
+            "min_samples_leaf": 19,
+            "min_samples_split": 19,
+            "max_depth": 6,
+            "ccp_alpha": 0.2605438530025309,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "96 - JAL_CALIFORNIA": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.3251763222972987,
+            "Google Weekly": 0.43469665684225856
+        },
+        "params": {
+            "n_estimators": 5,
+            "min_samples_leaf": 5,
+            "min_samples_split": 8,
+            "max_depth": 7,
+            "ccp_alpha": 0.12167868332849237,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "97 - JAL_TEXAS": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.2523550094505588,
+            "Google Weekly": 0.6432415285585248
+        },
+        "params": {
+            "n_estimators": 92,
+            "min_samples_leaf": 1,
+            "min_samples_split": 14,
+            "max_depth": 6,
+            "ccp_alpha": 0.18338136500017901,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "98 - JAL_WEST": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.15643995197346908,
+            "Google Weekly": 0.741641280084551
+        },
+        "params": {
+            "n_estimators": 78,
+            "min_samples_leaf": 6,
+            "min_samples_split": 6,
+            "max_depth": 6,
+            "ccp_alpha": 0.0905040244406493,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "99 - JAL_EAST": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.3026470924992417,
+            "Google Weekly": 0.6798525183003392
+        },
+        "params": {
+            "n_estimators": 18,
+            "min_samples_leaf": 2,
+            "min_samples_split": 6,
+            "max_depth": 5,
+            "ccp_alpha": 0.09763136431056914,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "90 - CICLO_ILLI": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.2864783374041536,
+            "Google Weekly": 0.7356794998848623
+        },
+        "params": {
+            "n_estimators": 46,
+            "min_samples_leaf": 15,
+            "min_samples_split": 20,
+            "max_depth": 4,
+            "ccp_alpha": 0.26077338618707213,
+            "bootstrap": false,
+            "criterion": "squared_error"
+        }
+    },
+    "32 - LFX_ALLUP1": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 17,
+            "min_samples_leaf": 5,
+            "min_samples_split": 9,
+            "max_depth": 4,
+            "ccp_alpha": 0.19885661508594274,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    }
+}
