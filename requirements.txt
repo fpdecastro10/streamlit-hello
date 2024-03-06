@@ -12,3 +12,4 @@ prophet==1.1.5
 shap==0.44.1
 plotnine==0.12.4
 seaborn==0.13.1
+ipython==8.20.0
