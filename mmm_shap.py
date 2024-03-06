@@ -31,8 +31,6 @@ plt.style.use({
     'savefig.edgecolor': '#1a1a1a',
 })
 
-
-
 import shap
 shap.initjs()
 

@@ -1,12 +1,7 @@
 import streamlit as st
 st.set_option('deprecation.showPyplotGlobalUse', False)
-import plotly.express as px
-import re
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-import statsmodels.api as sm
-from sklearn.linear_model import LinearRegression
 from app1 import dataframe_to_markdown
 from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance
 import matplotlib.pyplot as plt
@@ -14,9 +9,6 @@ import matplotlib.pyplot as plt
 
 import pandas as pd
 import numpy as np
-import math
-import sys
-import os
 from datetime import datetime, timedelta, date
 
 from prophet import Prophet
