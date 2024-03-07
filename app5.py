@@ -337,6 +337,11 @@ def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
         # st.write(dict_of_avg_alpha_coefs_shares)
         
     df_filter_by_camp_time["Store Group"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
+
+    list_stores_grpups = df_filter_by_camp_time["Store Group"].unique().tolist()
+    storeGroupSelected = st.multiselect("Seleccione los stores groups que desea quitar de la estimación de distribución",list_stores_grpups)
+
+    df_filter_by_camp_time = df_filter_by_camp_time.query("`Store Group` not in @storeGroupSelected")
     df_filter_by_camp_time = df_filter_by_camp_time.groupby("Store Group").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
     df_filter_by_camp_time["per tiendas"] = df_filter_by_camp_time['id_store_retailer'] / df_filter_by_camp_time['id_store_retailer'].sum() * 100
     df_filter_by_camp_time["per sales"] = df_filter_by_camp_time['sales'] / df_filter_by_camp_time['sales'].sum() * 100
@@ -351,7 +356,6 @@ def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
         df_filter_by_camp_time["investment"] = (df_filter_by_camp_time["share tiendas budget"] + df_filter_by_camp_time["share ventas budget"]) / 2
         st.markdown(dataframe_to_markdown(df_filter_by_camp_time[["Store Group","investment"]]), unsafe_allow_html=True)
     st.markdown("<div style='height:20px'></div>",unsafe_allow_html=True)
-    st.write(dict_of_avg_alpha_coefs_shares_bis)
     pie_graph(pd.DataFrame(dict_of_avg_alpha_coefs_shares_bis.items(), columns=['canal', 'investment']),"canal","investment","Distribución del budget total por canal")
     pie_graph(df_filter_by_camp_time,"Store Group","investment","Distribución del budget total por Store Group")
 
