@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from app1 import dataframe_to_markdown
 from scipy.stats import zscore
 import zipfile
+from mmm_shap import list_investment_store_group
 
 zip_file_path = "dataset_to_detect_performance_of_stores.csv.zip"
 with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
@@ -298,8 +299,21 @@ def pie_graph(df,columnsx,columnsy,title):
     st.markdown(f"<h3 style='text-align:center'>{title}</h3>",unsafe_allow_html=True)
     st.plotly_chart(fig)
 
+def simulation_built():
+    #New approach
+
+    numbre_input_increases = st.number_input("Crecimiento semanal deseado en ventas (%)",min_value=0,value=0)
+
+    if st.button("Predecir crecimiento"):
+        result_of_simulation = list_investment_store_group(numbre_input_increases)
+        list_investment_simulation = []
+        for key, value in result_of_simulation.items():
+            if value != '-':
+                list_investment_simulation.append(value)
+        st.write(f"Se recomienda invertir ${round(np.mean(list_investment_simulation))} para crecer un {numbre_input_increases}% con respecto a las ventas promediadas del mes pasado")
 
 def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
+
     df_filter_by_camp = df_sales_storeGroup.query(f"campaign_storeGroup in @camaping_new_client")
     df_filter_by_camp_time = df_filter_by_camp.query(f"{window_time[0]} < ISOweek and ISOweek < {window_time[1]}")
     # Filter the original dataset by the campaign and time window
@@ -415,6 +429,7 @@ def main():
             selected_time = (start_date, end_date)
 
     if type_of_client == "Cliente Nuevo":
+        simulation_built()
         if investment_in_media > 0 and selection_storeGroups != []:
             new_client(camaping_new_client,investment_in_media, selected_time, selection_storeGroups)
         else:

@@ -3,7 +3,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 import numpy as np
 from sklearn.model_selection import train_test_split
 from app1 import dataframe_to_markdown
-from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance,calculated_incerement_sales
+from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance,calculated_incerement_sales, df_builder_tablaMedio, obtener_fecha_domingo, list_investment_store_group
 import matplotlib.pyplot as plt
 import os
 import pickle
@@ -29,43 +29,11 @@ from sklearn.model_selection import TimeSeriesSplit
 
 import json
 
-# Formateamos las fechas en el formato correcto
-def obtener_fecha_domingo(semana):
-    
-    # Extraer el año y el número de semana de la entrada
-    year = int(str(semana)[:4])
-    week = int(str(semana)[4:])
-    
-    # Calcular la fecha del primer día del año y desplazarla al primer domingo
-    fecha_inicio_anio = datetime(year, 1, 1)
-    dias_para_domingo = 6 - fecha_inicio_anio.weekday()
-    primer_domingo = fecha_inicio_anio + timedelta(days=dias_para_domingo)
-    
-    # Calcular la fecha del domingo correspondiente a la semana dada
-    fecha_domingo = primer_domingo + timedelta(weeks=week-1)
-    
-    # Devolver la fecha en formato YYYY-MM-DD
-    return fecha_domingo.strftime("%Y-%m-%d")
-
-def df_builder_tablaMedio(df,list_group,dict_group):
-    df_tablaMedio_ISOweek = df.groupby(
-            list_group
-        ).agg(
-            dict_group
-        ).reset_index()
-    pivot_table_tablaMdio_cost = pd.pivot_table(df_tablaMedio_ISOweek,values='cost_campaign',index=['ISOweek','concat_store_group_name'],columns="tabla_medio")
-    isoWeek_sales_origin = df_tablaMedio_ISOweek[['ISOweek','concat_store_group_name','sales']].groupby(['ISOweek','concat_store_group_name']).mean().reset_index()
-    union_sales_tablaMedio_cost = pd.merge(pivot_table_tablaMdio_cost, isoWeek_sales_origin, on=['ISOweek','concat_store_group_name'], how='left')
-    
-    return union_sales_tablaMedio_cost
-
-
 if 'data_whole_sg_wp' in  st.session_state:
     data_whole_sg_wp = st.session_state.data_whole_sg_wp
 else:
     data_whole_sg_wp = pd.read_csv('datasetCampignSalesNew.csv')
     data_whole_sg_wp['concat_store_group_name'] = data_whole_sg_wp["store_group_id"].astype(str) + " - " + data_whole_sg_wp["name"]
-    data_whole_sg_wp["concat_store_group_name"] = data_whole_sg_wp["store_group_id"].astype(str) + " - " + data_whole_sg_wp["name"]
     # Completamos los valores nan en tabla medio con 'No Campaign'. Hay semanas donde se vendio pero no se le hizo campaigns.
     data_whole_sg_wp['tabla_medio'] = data_whole_sg_wp['tabla_medio'].fillna('No Campaign')
     # Completamos los costo de campaña con 0. En las semanas que no se hizo campañas
@@ -146,7 +114,6 @@ def arbol_regressor(store_group_name):
     adstock_features_params['Google Weekly_adstock'] = (0.3, 0.8)
     adstock_features_params['Facebook Weekly_adstock'] = (0.1, 0.4)
 
-    OPTUNA_TRIALS = 1000
 
     final_data_store_group_wi = final_data_store_group.drop("index",axis=1)
 
@@ -156,6 +123,7 @@ def arbol_regressor(store_group_name):
     
     if store_group_name not in params_adstock:
         
+        OPTUNA_TRIALS = 1000
         experiment = optuna_optimize(trials = OPTUNA_TRIALS, 
                                     data = final_data_store_group_wi,
                                     target = target,
@@ -272,7 +240,7 @@ def arbol_regressor(store_group_name):
                                 result['x_input_interval_nontransformed'],
                                 final_data_store_group_wi,
                                 features)
-        st.markdown(f"<p style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{calculated_investment}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{calculated_investment[0]}</p>", unsafe_allow_html=True)
 
 
 

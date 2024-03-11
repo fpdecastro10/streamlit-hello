@@ -2,6 +2,7 @@ import optuna as opt
 import pandas as pd
 from functools import partial
 import pickle
+import streamlit as st  
 from prophet import Prophet
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
@@ -36,8 +37,76 @@ plt.style.use({
 
 import shap
 shap.initjs()
+from sklearn.model_selection import TimeSeriesSplit
+import json
 
 import numpy as np
+
+
+# Formateamos las fechas en el formato correcto
+def obtener_fecha_domingo(semana):
+    
+    # Extraer el año y el número de semana de la entrada
+    year = int(str(semana)[:4])
+    week = int(str(semana)[4:])
+    
+    # Calcular la fecha del primer día del año y desplazarla al primer domingo
+    fecha_inicio_anio = datetime(year, 1, 1)
+    dias_para_domingo = 6 - fecha_inicio_anio.weekday()
+    primer_domingo = fecha_inicio_anio + timedelta(days=dias_para_domingo)
+    
+    # Calcular la fecha del domingo correspondiente a la semana dada
+    fecha_domingo = primer_domingo + timedelta(weeks=week-1)
+    
+    # Devolver la fecha en formato YYYY-MM-DD
+    return fecha_domingo.strftime("%Y-%m-%d")
+
+def df_builder_tablaMedio(df,list_group,dict_group):
+    df_tablaMedio_ISOweek = df.groupby(
+            list_group
+        ).agg(
+            dict_group
+        ).reset_index()
+    pivot_table_tablaMdio_cost = pd.pivot_table(df_tablaMedio_ISOweek,values='cost_campaign',index=['ISOweek','concat_store_group_name'],columns="tabla_medio")
+    isoWeek_sales_origin = df_tablaMedio_ISOweek[['ISOweek','concat_store_group_name','sales']].groupby(['ISOweek','concat_store_group_name']).mean().reset_index()
+    union_sales_tablaMedio_cost = pd.merge(pivot_table_tablaMdio_cost, isoWeek_sales_origin, on=['ISOweek','concat_store_group_name'], how='left')
+    
+    return union_sales_tablaMedio_cost
+
+if 'data_whole_sg_wp' in  st.session_state:
+    data_whole_sg_wp = st.session_state.data_whole_sg_wp
+else:
+    data_whole_sg_wp = pd.read_csv('datasetCampignSalesNew.csv')
+    data_whole_sg_wp['concat_store_group_name'] = data_whole_sg_wp["store_group_id"].astype(str) + " - " + data_whole_sg_wp["name"]
+    # Completamos los valores nan en tabla medio con 'No Campaign'. Hay semanas donde se vendio pero no se le hizo campaigns.
+    data_whole_sg_wp['tabla_medio'] = data_whole_sg_wp['tabla_medio'].fillna('No Campaign')
+    # Completamos los costo de campaña con 0. En las semanas que no se hizo campañas
+    data_whole_sg_wp['cost_campaign'] = data_whole_sg_wp['cost_campaign'].fillna(0)
+    # Cuando no tenemos información de semanas, le agregamos "-"
+    data_whole_sg_wp["yearweek"] = data_whole_sg_wp["yearweek"].fillna("-")
+    data_whole_sg_wp['ISOweek'] = data_whole_sg_wp['ISOweek'].astype(str)
+    # Eliminamos los valores de semanas que solo tienen el año
+    data_whole_sg_wp = data_whole_sg_wp[data_whole_sg_wp['ISOweek'].str.len() > 4]
+    data_whole_sg_wp["ISOweek"]=data_whole_sg_wp["ISOweek"].apply(obtener_fecha_domingo)
+    st.session_state.data_whole_sg_wp = data_whole_sg_wp
+
+if 'table_pivoted_r' in st.session_state:
+    table_pivoted_r = st.session_state.table_pivoted_r
+else:
+    list_group = [ "concat_store_group_name", "tabla_medio", "ISOweek", "yearweek"]
+    dict_group = {
+        'cost_campaign': 'sum',
+        'sales': 'mean'
+    }
+    data_whole_sg = df_builder_tablaMedio(data_whole_sg_wp,list_group,dict_group)
+    data_whole_sg_columns = data_whole_sg.columns.tolist()
+    data_whole_sg_columns.remove('No Campaign')
+    # Eliminas las columnas 'No Campaign'
+    table_pivoted_r = data_whole_sg[data_whole_sg_columns]
+    st.session_state.table_pivoted_r = table_pivoted_r
+
+list_store_group = table_pivoted_r['concat_store_group_name'].unique().tolist()
+
 
 class AdstockGeometric(BaseEstimator, TransformerMixin):
     def __init__(self, alpha=0.5):
@@ -390,7 +459,7 @@ def calculated_incerement_sales(model,
                                 features):
     # Si solo tiene dos variables, son trend y season. No tiene campañas asignadas. No sirve.
     if len(features) == 2:
-         return "No tiene campañas asignadas."
+         return ("No tiene campañas asignadas.","-")
     
     shap_values_scope = shap_values
     data_input_nontransformed = data_input_nontransformed
@@ -434,7 +503,7 @@ def calculated_incerement_sales(model,
 
     # Si media_channels es vacia quiere decir que facebook y google no explican ventas. No sirve.
     if media_channels_reason == []:
-        return "Google o Facebook no explican las ventas."
+        return ("Google o Facebook no explican las ventas.","-")
     
     store_group_name = data_store_group_wi['concat_store_group_name'].unique()[0]
 
@@ -446,7 +515,7 @@ def calculated_incerement_sales(model,
         # prophet.fit(table_prophet_index)
         # with open(f"models/{store_group_name}.pkl", 'wb') as f:
         #     pickle.dump(prophet, f)
-        return "El modelo no ha sido entrenado"
+        return ("El modelo no ha sido entrenado","-")
 
     date_to_estimate = date_to_estimate.strftime("%Y-%m-%d")
     dataframe = pd.DataFrame(
@@ -470,7 +539,7 @@ def calculated_incerement_sales(model,
     # Calculamos el incremento de ventas
     increment_sales = 0
     investment = 100
-    increment = 40
+    increment = 30
     limit_max_investment = 20000
     while increment_sales < target_sales:
         prohet_prediction_cost_campaign = dataframe.copy()
@@ -483,7 +552,135 @@ def calculated_incerement_sales(model,
         increment_sales = model.predict(prohet_prediction_cost_campaign[features])[0]
         # time.sleep(3)
         if investment > limit_max_investment:
-            return f"La inversión supera los {limit_max_investment}"
+            return (f"La inversión supera los {limit_max_investment}","-")
         investment += increment
 
-    return f"El monto a invertir para crecer un <b>{growing}%</b> es $ <b>{investment}</b>"
+    return (f"El monto a invertir para crecer un <b>{growing}%</b> es $ <b>{investment}</b>",investment)
+
+
+def list_investment_store_group(waiting_increase,list_sg = list_store_group):
+
+    dict_inversion = {}
+
+    file_json = 'parameter_sg.json'
+    with open(file_json, "r") as archivo:
+        params_adstock = json.load(archivo)
+
+    for store_group_index in range(len(list_sg)):
+        try:
+        # store_group = list_sg[54]
+            store_group = list_sg[store_group_index]
+
+            # Filtramos la tabla por store_group
+            table_pivoted_sg = table_pivoted_r[
+                table_pivoted_r['concat_store_group_name'] == store_group
+            ]   
+            
+            # Renombramos las columnas de targe y date para esetudiar su estacionalidad
+            # Nos quedamos con las columnas 'ds', 'y' y 'concat_store_group_name'
+            table_prophet_sg = table_pivoted_sg.rename(
+                columns={'sales':'y','ISOweek':'ds'}
+            )[['ds','y','concat_store_group_name']]
+
+            table_prophet_index = table_prophet_sg[['ds','y']]
+
+            if os.path.exists(f"models/{store_group}.pkl"):
+                with open(f"models/{store_group}.pkl", 'rb') as f:
+                    prophet = pickle.load(f)
+            else:
+                prophet = Prophet(yearly_seasonality=True)
+                prophet.fit(table_prophet_index)
+                with open(f"models/{store_group}.pkl", 'wb') as f:
+                    pickle.dump(prophet, f)
+
+            # Incluimos la estacionalidad anual en el modelo
+            prophet = Prophet(yearly_seasonality=True)
+            # El modelo aprenderá de los datos de entrenamiento y buscará patrones y tendencias en la serie temporal de 'tabla_prophet_index'.
+            prophet.fit(table_prophet_index)
+            prophet_predict = prophet.predict(table_prophet_index)
+
+            final_data_store_group = table_pivoted_sg.copy().reset_index()
+            final_data_store_group['trend'] = prophet_predict['trend']
+            final_data_store_group['season'] = prophet_predict['yearly']
+
+            target = 'sales'
+            data_sg = data_whole_sg_wp[data_whole_sg_wp['concat_store_group_name'] == store_group]
+            media_channels = data_sg['tabla_medio'].unique().tolist()
+            if 'No Campaign' in media_channels:
+                media_channels.remove('No Campaign')
+            features = ['trend','season'] + media_channels
+
+
+            for tabla_medio in media_channels:
+                final_data_store_group[tabla_medio] = final_data_store_group[tabla_medio].fillna(0)
+            final_data_store_group
+            
+            final_data_store_group_wi = final_data_store_group.drop("index",axis=1)
+            num_filas = final_data_store_group_wi.shape[0]
+            # Define el número de divisiones que deseas realizar
+            n_splits = 4
+
+            # Define el tamaño del conjunto de prueba en términos de número de filas
+            test_size = min(15, num_filas // n_splits)
+            # se creearan tres divisiones 
+            tscv = TimeSeriesSplit(n_splits=n_splits, test_size = test_size)
+
+            adstock_features_params = {}
+            # Colocamos los parámetros de adstock
+            adstock_features_params['Google Weekly_adstock'] = (0.3, 0.8)
+            adstock_features_params['Facebook Weekly_adstock'] = (0.1, 0.4)
+
+            OPTUNA_TRIALS = 1000
+
+            
+            if store_group not in params_adstock:
+                
+                experiment = optuna_optimize(trials = OPTUNA_TRIALS, 
+                                            data = final_data_store_group_wi,
+                                            target = target,
+                                            features = features, 
+                                            adstock_features = media_channels, 
+                                            adstock_features_params = adstock_features_params, 
+                                            media_features=media_channels, 
+                                            tscv = tscv, 
+                                            is_multiobjective=False)
+
+
+                params_adstock[store_group] = {
+                                                "adstock_alphas" : experiment.best_trial.user_attrs["adstock_alphas"],
+                                                "params" : experiment.best_trial.user_attrs["params"]
+                                            }
+
+                best_params = experiment.best_trial.user_attrs["params"]
+                adstock_params = experiment.best_trial.user_attrs["adstock_alphas"]
+            else:
+                best_params = params_adstock[store_group]["params"]
+                adstock_params = params_adstock[store_group]["adstock_alphas"]
+
+            START_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 0)
+            END_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 1) 
+
+
+            result = model_refit(data = final_data_store_group_wi, 
+                                target = target,
+                                features = features, 
+                                media_channels = media_channels,
+                                model_params = best_params, 
+                                adstock_params = adstock_params, 
+                                start_index = START_ANALYSIS_INDEX, 
+                                end_index = END_ANALYSIS_INDEX)
+            
+            with open(file_json, "w") as archivo:
+                json.dump(params_adstock, archivo,indent=4)
+
+            investment = calculated_incerement_sales(result['model'],
+                                    waiting_increase,
+                                    result['df_shap_values'],
+                                    result['x_input_interval_nontransformed'],
+                                    final_data_store_group_wi,
+                                    features)
+            
+            dict_inversion[store_group] = investment[1]
+        except:
+            pass
+    return dict_inversion
