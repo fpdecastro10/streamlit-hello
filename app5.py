@@ -306,6 +306,7 @@ def simulation_built():
 
     if st.button("Predecir crecimiento"):
         result_of_simulation = list_investment_store_group(numbre_input_increases)
+        st.write(result_of_simulation)
         list_investment_simulation = []
         for key, value in result_of_simulation.items():
             if value != '-':
