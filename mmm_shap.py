@@ -1,13 +1,16 @@
 import optuna as opt
 import pandas as pd
 from functools import partial
-
+import pickle
+from prophet import Prophet
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.ensemble import RandomForestRegressor
 
 from plotnine import *
+from datetime import datetime, timedelta
+import os
 
 import seaborn as sns
 
@@ -184,7 +187,7 @@ def model_refit(data,
     #apply adstock transformation
     for feature in media_channels:
         adstock_alpha = adstock_alphas[feature]
-        print(f"applying geometric adstock transformation on {feature} with alpha {adstock_alpha}") 
+        # print(f"applying geometric adstock transformation on {feature} with alpha {adstock_alpha}") 
 
         #adstock transformation
         x_feature = data_refit[feature].values.reshape(-1, 1)
@@ -205,7 +208,7 @@ def model_refit(data,
     x_input_interval_transformed = x_input.iloc[start_index:end_index]
 
     #revenue prediction for the analysis interval
-    print(f"predicting {len(x_input_interval_transformed)}")
+    # print(f"predicting {len(x_input_interval_transformed)}")
     prediction = random_forest.predict(x_input_interval_transformed)
 
     #transformed data set for the analysis interval 
@@ -349,11 +352,11 @@ def optuna_optimize(trials,
                     tscv, 
                     is_multiobjective, 
                     seed = 42):
-    print(f"data size: {len(data)}")
-    print(f"media features: {media_features}")
-    print(f"adstock features: {adstock_features}")
-    print(f"features: {features}")
-    print(f"is_multiobjective: {is_multiobjective}")
+    # print(f"data size: {len(data)}")
+    # print(f"media features: {media_features}")
+    # print(f"adstock features: {adstock_features}")
+    # print(f"features: {features}")
+    # print(f"is_multiobjective: {is_multiobjective}")
     opt.logging.set_verbosity(opt.logging.WARNING) 
     
     if is_multiobjective == False:
@@ -376,3 +379,110 @@ def optuna_optimize(trials,
     study_mmm.optimize(optimization_function, n_trials = trials, show_progress_bar = True)
     
     return study_mmm
+
+
+
+def calculated_incerement_sales(model,
+                                growing,
+                                shap_values,
+                                data_input_nontransformed,
+                                data_store_group_wi,
+                                features):
+    # Si solo tiene dos variables, son trend y season. No tiene campañas asignadas. No sirve.
+    if len(features) == 2:
+         return "No tiene campañas asignadas."
+    
+    shap_values_scope = shap_values
+    data_input_nontransformed = data_input_nontransformed
+    feature_list = data_input_nontransformed.columns
+
+    if isinstance(shap_values_scope, pd.DataFrame) == False:
+            shap_v = pd.DataFrame(shap_values_scope)
+            shap_v.columns = feature_list
+    else:
+        shap_v = shap_values_scope
+
+    shap_abs = np.abs(shap_v)
+    k=pd.DataFrame(shap_abs.mean()).reset_index()
+    k.columns=['reason','score']
+
+    # Conseguimos el promedio de las últimas 4 semanas
+    # Cirterio asumido, tomamos el promedio de las últimos 3 meses y si no tiene datos
+    # tomamos el promedio de todos los datos
+    date_to_estimate = datetime.today()
+    date_to_trashold = date_to_estimate - timedelta(days=1*30)
+    isoweeek_serie = pd.to_datetime(data_store_group_wi['ISOweek'])
+    data_store_filter_by_date = data_store_group_wi[isoweeek_serie > date_to_trashold]
+    
+    if not data_store_filter_by_date.empty:
+        average_sales = data_store_filter_by_date['sales'].mean()
+    else:
+        date_to_estimate = max(isoweeek_serie) + timedelta(days=7)
+        date_to_trashold = date_to_estimate - timedelta(days=1*30)
+        data_store_filter_by_date = data_store_group_wi[isoweeek_serie > date_to_trashold]
+        average_sales = data_store_filter_by_date['sales'].mean()
+
+    media_channels_reason = k['reason'].tolist()
+    list_channel_with_score_0 = []
+    for indice, fila in k.iterrows():
+        if fila['score'] == 0:
+            media_channels_reason.remove(fila['reason'])
+            list_channel_with_score_0.append(fila['reason'])
+
+    media_channels_reason.remove('trend')
+    media_channels_reason.remove('season')
+
+    # Si media_channels es vacia quiere decir que facebook y google no explican ventas. No sirve.
+    if media_channels_reason == []:
+        return "Google o Facebook no explican las ventas."
+    
+    store_group_name = data_store_group_wi['concat_store_group_name'].unique()[0]
+
+    if os.path.exists(f"models/{store_group_name}.pkl"):
+        with open(f"models/{store_group_name}.pkl", 'rb') as f:
+            prophet = pickle.load(f)
+    else:
+        prophet = Prophet(yearly_seasonality=True)
+        prophet.fit(table_prophet_index)
+        with open(f"models/{store_group_name}.pkl", 'wb') as f:
+            pickle.dump(prophet, f)
+
+    date_to_estimate = date_to_estimate.strftime("%Y-%m-%d")
+    dataframe = pd.DataFrame(
+        {"ds":[date_to_estimate]}
+    )
+    
+    prohet_prediction = prophet.predict(dataframe)
+    dataframe['trend'] = prohet_prediction['trend']
+    dataframe['season'] = prohet_prediction['yearly']
+
+    target_sales = average_sales * (1+growing/100)
+
+    shares_to_channels = {}
+    for channel in media_channels_reason:
+        shares_to_channels[channel] = data_input_nontransformed[channel].sum()
+    total_investment = sum(shares_to_channels.values())
+    shares_channels = {}
+    for key, value in shares_to_channels.items():
+        shares_channels[key] = value / total_investment
+
+    # Calculamos el incremento de ventas
+    increment_sales = 0
+    investment = 100
+    increment = 40
+    limit_max_investment = 20000
+    while increment_sales < target_sales:
+        prohet_prediction_cost_campaign = dataframe.copy()
+        for channel in media_channels_reason:
+            prohet_prediction_cost_campaign[channel] = investment * shares_channels[channel]
+        for channel in list_channel_with_score_0:
+            prohet_prediction_cost_campaign[channel] = 0
+
+        # display(prohet_prediction_cost_campaign)
+        increment_sales = model.predict(prohet_prediction_cost_campaign[features])[0]
+        # time.sleep(3)
+        if investment > limit_max_investment:
+            return f"La inversión supera los {limit_max_investment}"
+        investment += increment
+
+    return f"El monto a invertir para crecer un <b>{growing}%</b> es $ <b>{investment}</b>"

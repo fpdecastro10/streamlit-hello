@@ -490,5 +490,47 @@
             "bootstrap": true,
             "criterion": "squared_error"
         }
+    },
+    "68 - MS_AWARENESS": {
+        "adstock_alphas": {
+            "Google Weekly": 0.3157705652230658,
+            "Facebook Weekly": 0.11058180029990002
+        },
+        "params": {
+            "n_estimators": 96,
+            "min_samples_leaf": 4,
+            "min_samples_split": 2,
+            "max_depth": 6,
+            "ccp_alpha": 0.14520273955603508,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "100 - MS_CALIFORNIA": {
+        "adstock_alphas": {
+            "Facebook Weekly": 0.10761719959337519,
+            "Google Weekly": 0.5519954728513816
+        },
+        "params": {
+            "n_estimators": 34,
+            "min_samples_leaf": 3,
+            "min_samples_split": 10,
+            "max_depth": 4,
+            "ccp_alpha": 0.04997452641793513,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
+    },
+    "29 - LFX_BLW5": {
+        "adstock_alphas": {},
+        "params": {
+            "n_estimators": 58,
+            "min_samples_leaf": 18,
+            "min_samples_split": 7,
+            "max_depth": 5,
+            "ccp_alpha": 0.1798774975268611,
+            "bootstrap": true,
+            "criterion": "squared_error"
+        }
     }
 }

@@ -3,7 +3,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 import numpy as np
 from sklearn.model_selection import train_test_split
 from app1 import dataframe_to_markdown
-from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance
+from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance,calculated_incerement_sales
 import matplotlib.pyplot as plt
 import os
 import pickle
@@ -185,18 +185,18 @@ def arbol_regressor(store_group_name):
         adstock_params = params_adstock[store_group_name]["adstock_alphas"]
         
 
-    START_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 0.25)
+    START_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 0)
     END_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 1)        
 
-    result = model_refit(data = final_data_store_group_wi, 
+    result = model_refit(data = final_data_store_group_wi,
                      target = target,
-                     features = features, 
+                     features = features,
                      media_channels = media_channels,
                      model_params = best_params, 
                      adstock_params = adstock_params, 
                      start_index = START_ANALYSIS_INDEX, 
                      end_index = END_ANALYSIS_INDEX)
-
+    
     rmse_metric = mean_squared_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"], squared=False)
     mape_metric = mean_absolute_percentage_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
     nrmse_metric = nrmse(result["y_true_interval"], result["prediction_interval"])
@@ -217,28 +217,38 @@ def arbol_regressor(store_group_name):
     st.pyplot(fig_shapp)
 
     st.line_chart(final_data_store_group_wi[['trend','season']])
+    
+    date_to_estimate = datetime.today()
+    date_to_trashold = date_to_estimate - timedelta(days=1*30)
+    isoweeek_serie = pd.to_datetime(final_data_store_group_wi['ISOweek'])
+    data_store_filter_by_date = final_data_store_group_wi[isoweeek_serie > date_to_trashold]
+    
+    if not data_store_filter_by_date.empty:
+        average_sales = data_store_filter_by_date['sales'].mean()
+    else:
+        date_to_estimate = max(isoweeek_serie) + timedelta(days=7)
+        date_to_trashold = date_to_estimate - timedelta(days=1*30)
+        data_store_filter_by_date = final_data_store_group_wi[isoweeek_serie > date_to_trashold]
+        average_sales = data_store_filter_by_date['sales'].mean()
 
-    st.write(f"average sales: {round(final_data_store_group_wi['sales'].mean())}")
+    st.write(f"average sales: {round(average_sales)}")
     if media_channels == []:
         st.write(f"average cost_campaign: 0")
     else:
         total_cost_campaign = 0
         for tabla_medio in media_channels:
-            cost_tabla_medio = final_data_store_group_wi[tabla_medio].mean()
+            cost_tabla_medio = final_data_store_group_wi[final_data_store_group_wi[tabla_medio]>0][tabla_medio].mean()
             st.write(f"avearge {tabla_medio}: {round(cost_tabla_medio)}")
             total_cost_campaign += cost_tabla_medio
         st.write(f"average cost_campaign: {round(total_cost_campaign/len(media_channels))}")
     
-    
-    
     st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predict sales</h3>", unsafe_allow_html=True)
-    
-    season = st.date_input("Select a date (season):", date.today())
+
+    season = st.date_input("Select a date (season):", date_to_estimate)
 
     season_trend = pd.DataFrame({'ds': [season]})
     prohet_prediction = prophet.predict(season_trend)
     prediction_trend = prohet_prediction[['trend','yearly']].rename(columns={'yearly':'season'})
-    
 
     list_input = {}
     for tabla_medio in media_channels:
@@ -251,7 +261,19 @@ def arbol_regressor(store_group_name):
         prediction_str = f"La predicción de ventas es: {round(prediction[0])} un"
         st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{prediction_str}</h3>", unsafe_allow_html=True)
 
-    
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predict investment</h3>", unsafe_allow_html=True)
+    input_investment = st.number_input("Insert a number to grow: ", value=0)
+
+    if st.button("Predecir investment"):
+        calculated_investment = calculated_incerement_sales(
+                                result['model'],
+                                input_investment,
+                                result['df_shap_values'],
+                                result['x_input_interval_nontransformed'],
+                                final_data_store_group_wi,
+                                features)
+        st.markdown(f"<p style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{calculated_investment}</p>", unsafe_allow_html=True)
+
 
 
 def main():
