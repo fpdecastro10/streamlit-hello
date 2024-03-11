@@ -442,10 +442,11 @@ def calculated_incerement_sales(model,
         with open(f"models/{store_group_name}.pkl", 'rb') as f:
             prophet = pickle.load(f)
     else:
-        prophet = Prophet(yearly_seasonality=True)
-        prophet.fit(table_prophet_index)
-        with open(f"models/{store_group_name}.pkl", 'wb') as f:
-            pickle.dump(prophet, f)
+        # prophet = Prophet(yearly_seasonality=True)
+        # prophet.fit(table_prophet_index)
+        # with open(f"models/{store_group_name}.pkl", 'wb') as f:
+        #     pickle.dump(prophet, f)
+        return "El modelo no ha sido entrenado"
 
     date_to_estimate = date_to_estimate.strftime("%Y-%m-%d")
     dataframe = pd.DataFrame(
