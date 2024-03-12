@@ -3,7 +3,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 import numpy as np
 from sklearn.model_selection import train_test_split
 from app1 import dataframe_to_markdown
-from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance,calculated_incerement_sales, df_builder_tablaMedio, obtener_fecha_domingo, list_investment_store_group
+from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance,calculated_increment_sales, df_builder_tablaMedio, obtener_fecha_domingo
 import matplotlib.pyplot as plt
 import os
 import pickle
@@ -233,7 +233,7 @@ def arbol_regressor(store_group_name):
     input_investment = st.number_input("Insert a number to grow: ", value=0)
 
     if st.button("Predecir investment"):
-        calculated_investment = calculated_incerement_sales(
+        calculated_investment = calculated_increment_sales(
                                 result['model'],
                                 input_investment,
                                 result['df_shap_values'],
