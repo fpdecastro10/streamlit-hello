@@ -451,7 +451,7 @@ def optuna_optimize(trials,
 
 
 
-def calculated_incerement_sales(model,
+def calculated_increment_sales(model,
                                 growing,
                                 shap_values,
                                 data_input_nontransformed,
@@ -511,10 +511,6 @@ def calculated_incerement_sales(model,
         with open(f"models/{store_group_name}.pkl", 'rb') as f:
             prophet = pickle.load(f)
     else:
-        # prophet = Prophet(yearly_seasonality=True)
-        # prophet.fit(table_prophet_index)
-        # with open(f"models/{store_group_name}.pkl", 'wb') as f:
-        #     pickle.dump(prophet, f)
         return ("El modelo no ha sido entrenado","-")
 
     date_to_estimate = date_to_estimate.strftime("%Y-%m-%d")
@@ -588,15 +584,8 @@ def list_investment_store_group(waiting_increase,list_sg = list_store_group):
                 with open(f"models/{store_group}.pkl", 'rb') as f:
                     prophet = pickle.load(f)
             else:
-                prophet = Prophet(yearly_seasonality=True)
-                prophet.fit(table_prophet_index)
-                with open(f"models/{store_group}.pkl", 'wb') as f:
-                    pickle.dump(prophet, f)
+                continue
 
-            # Incluimos la estacionalidad anual en el modelo
-            prophet = Prophet(yearly_seasonality=True)
-            # El modelo aprenderá de los datos de entrenamiento y buscará patrones y tendencias en la serie temporal de 'tabla_prophet_index'.
-            prophet.fit(table_prophet_index)
             prophet_predict = prophet.predict(table_prophet_index)
 
             final_data_store_group = table_pivoted_sg.copy().reset_index()
@@ -673,7 +662,7 @@ def list_investment_store_group(waiting_increase,list_sg = list_store_group):
             with open(file_json, "w") as archivo:
                 json.dump(params_adstock, archivo,indent=4)
 
-            investment = calculated_incerement_sales(result['model'],
+            investment = calculated_increment_sales(result['model'],
                                     waiting_increase,
                                     result['df_shap_values'],
                                     result['x_input_interval_nontransformed'],
