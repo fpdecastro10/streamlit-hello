@@ -494,7 +494,7 @@ def calculated_increment_sales(model,
     media_channels_reason = k['reason'].tolist()
     list_channel_with_score_0 = []
     for indice, fila in k.iterrows():
-        if fila['score'] == 0:
+        if fila['score'] <= 0:
             media_channels_reason.remove(fila['reason'])
             list_channel_with_score_0.append(fila['reason'])
 
@@ -533,8 +533,15 @@ def calculated_increment_sales(model,
         shares_channels[key] = value / total_investment
 
     # Calculamos el incremento de ventas
-    increment_sales = 0
-    investment = 100
+    prohet_prediction_cost_campaign = dataframe.copy()
+    for channel in media_channels_reason:
+        prohet_prediction_cost_campaign[channel] = 0
+    for channel in list_channel_with_score_0:
+        prohet_prediction_cost_campaign[channel] = 0
+    
+    increment_sales = model.predict(prohet_prediction_cost_campaign[features])[0]
+    
+    investment = 0
     increment = 30
     limit_max_investment = 20000
     while increment_sales < target_sales:
@@ -598,7 +605,6 @@ def list_investment_store_group(waiting_increase,list_sg = list_store_group):
             if 'No Campaign' in media_channels:
                 media_channels.remove('No Campaign')
             features = ['trend','season'] + media_channels
-
 
             for tabla_medio in media_channels:
                 final_data_store_group[tabla_medio] = final_data_store_group[tabla_medio].fillna(0)
