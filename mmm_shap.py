@@ -478,18 +478,7 @@ def calculated_increment_sales(model,
     # Conseguimos el promedio de las últimas 4 semanas
     # Cirterio asumido, tomamos el promedio de las últimos 3 meses y si no tiene datos
     # tomamos el promedio de todos los datos
-    date_to_estimate = datetime.today()
-    date_to_trashold = date_to_estimate - timedelta(days=1*30)
-    isoweeek_serie = pd.to_datetime(data_store_group_wi['ISOweek'])
-    data_store_filter_by_date = data_store_group_wi[isoweeek_serie > date_to_trashold]
     
-    if not data_store_filter_by_date.empty:
-        average_sales = data_store_filter_by_date['sales'].mean()
-    else:
-        date_to_estimate = max(isoweeek_serie) + timedelta(days=7)
-        date_to_trashold = date_to_estimate - timedelta(days=1*30)
-        data_store_filter_by_date = data_store_group_wi[isoweeek_serie > date_to_trashold]
-        average_sales = data_store_filter_by_date['sales'].mean()
 
     media_channels_reason = k['reason'].tolist()
     list_channel_with_score_0 = []
@@ -513,16 +502,24 @@ def calculated_increment_sales(model,
     else:
         return ("El modelo no ha sido entrenado","-")
 
-    date_to_estimate = date_to_estimate.strftime("%Y-%m-%d")
+    date_to_estimate = datetime.today()
+    comparison_date = datetime.today()
+        
     dataframe = pd.DataFrame(
-        {"ds":[date_to_estimate]}
+        {"ds":[date_to_estimate.strftime("%Y-%m-%d")]}
     )
-    
     prohet_prediction = prophet.predict(dataframe)
     dataframe['trend'] = prohet_prediction['trend']
     dataframe['season'] = prohet_prediction['yearly']
+    prohet_prediction_cost_campaign = dataframe.copy()
+    for channel in media_channels_reason:
+        prohet_prediction_cost_campaign[channel] = 0
+    for channel in list_channel_with_score_0:
+        prohet_prediction_cost_campaign[channel] = 0
+    
+    increment_sales = model.predict(prohet_prediction_cost_campaign[features])[0]
 
-    target_sales = average_sales * (1+growing/100)
+    target_sales = increment_sales * (1+growing/100)
 
     shares_to_channels = {}
     for channel in media_channels_reason:
@@ -533,14 +530,6 @@ def calculated_increment_sales(model,
         shares_channels[key] = value / total_investment
 
     # Calculamos el incremento de ventas
-    prohet_prediction_cost_campaign = dataframe.copy()
-    for channel in media_channels_reason:
-        prohet_prediction_cost_campaign[channel] = 0
-    for channel in list_channel_with_score_0:
-        prohet_prediction_cost_campaign[channel] = 0
-    
-    increment_sales = model.predict(prohet_prediction_cost_campaign[features])[0]
-    
     investment = 0
     increment = 30
     limit_max_investment = 20000

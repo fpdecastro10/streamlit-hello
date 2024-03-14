@@ -328,27 +328,6 @@ def new_client(camaping_new_client,investment, window_time,selectedStoreGroups):
         dict_of_avg_alpha_coefs_shares_bis[medio] = np.sum(list_storeGroups_id.query(f"tabla_medio in @medio")['cost'])
 
     dict_of_avg_alpha_coefs_shares_bis = share_dict(dict_of_avg_alpha_coefs_shares_bis)
-
-
-
-    # if dict_of_avg_alpha_coefs == {}:
-    #     st.write("Los stores groups seleccionados, no tienen suficientes datos para realizar la predicción")
-    # else:
-
-        # dict_coeff_list = {}
-        # for key, items in dict_of_avg_alpha_coefs.items():
-        #     for key, items in items.items():
-        #         if key in dict_coeff_list:
-        #             dict_coeff_list[key].append(items)
-        #         else:
-        #             dict_coeff_list[key] = [items]
-        
-        # for key, items in dict_coeff_list.items():
-        #     dict_coeff_list[key] = np.mean(items)
-
-        # dict_of_avg_alpha_coefs_shares = share_dict(dict_coeff_list)
-
-        # st.write(dict_of_avg_alpha_coefs_shares)
         
     df_filter_by_camp_time["Store Group"] = df_filter_by_camp_time["id_storeGroup"].astype(str) + " - " + df_filter_by_camp_time["name_storeGroup"]
 
