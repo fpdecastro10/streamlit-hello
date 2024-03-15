@@ -7,3 +7,9 @@ matplotlib==3.7.2
 scikit-learn==1.2.2
 statsmodels==0.14.0
 plotly==5.18.0
+optuna==3.5.0
+prophet==1.1.5
+shap==0.44.1
+plotnine==0.12.4
+seaborn==0.13.1
+ipython==8.20.0
