@@ -532,7 +532,7 @@ def calculated_increment_sales(model,
     # Calculamos el incremento de ventas
     investment = 0
     increment = 30
-    limit_max_investment = 20000
+    limit_max_investment = 6000
     while increment_sales < target_sales:
         prohet_prediction_cost_campaign = dataframe.copy()
         for channel in media_channels_reason:
