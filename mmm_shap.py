@@ -449,6 +449,115 @@ def optuna_optimize(trials,
     
     return study_mmm
 
+def calculated_shape_values(list_sg = list_store_group):
+    
+    file_json = 'parameter_sg.json'
+    with open(file_json, "r") as archivo:
+        params_adstock = json.load(archivo)
+    
+    dict_result = {}
+
+    for store_group_index in range(len(list_sg)):
+        # try:
+            
+        store_group = list_sg[store_group_index]
+        table_pivoted_sg = table_pivoted_r[
+            table_pivoted_r['concat_store_group_name'] == store_group
+        ]
+        target = 'sales'
+        data_sg = data_whole_sg_wp[data_whole_sg_wp['concat_store_group_name'] == store_group]
+        media_channels = data_sg['tabla_medio'].unique().tolist()
+        if 'No Campaign' in media_channels:
+            media_channels.remove('No Campaign')
+        features = ['trend','season'] + media_channels
+        
+        if media_channels == []:
+            continue
+        
+        table_prophet_sg = table_pivoted_sg.rename(
+            columns={'sales':'y','ISOweek':'ds'}
+        )[['ds','y','concat_store_group_name']]
+    
+        table_prophet_index = table_prophet_sg[['ds','y']]
+
+        if os.path.exists(f"models/{store_group}.pkl"):
+            with open(f"models/{store_group}.pkl", 'rb') as f:
+                prophet = pickle.load(f)
+        else:
+            continue
+
+        prophet_predict = prophet.predict(table_prophet_index)
+
+        final_data_store_group = table_pivoted_sg.copy().reset_index()
+        final_data_store_group['trend'] = prophet_predict['trend']
+        final_data_store_group['season'] = prophet_predict['yearly']
+
+
+
+        for tabla_medio in media_channels:
+            final_data_store_group[tabla_medio] = final_data_store_group[tabla_medio].fillna(0)
+        final_data_store_group
+        
+        final_data_store_group_wi = final_data_store_group.drop("index",axis=1)
+        num_filas = final_data_store_group_wi.shape[0]
+        # Define el número de divisiones que deseas realizar
+        n_splits = 4
+
+        # Define el tamaño del conjunto de prueba en términos de número de filas
+        test_size = min(15, num_filas // n_splits)
+        # se creearan tres divisiones 
+        tscv = TimeSeriesSplit(n_splits=n_splits, test_size = test_size)
+
+        adstock_features_params = {}
+        # Colocamos los parámetros de adstock
+        adstock_features_params['Google Weekly_adstock'] = (0.3, 0.8)
+        adstock_features_params['Facebook Weekly_adstock'] = (0.1, 0.4)
+
+        OPTUNA_TRIALS = 1000
+
+        if store_group in params_adstock:
+            best_params = params_adstock[store_group]["params"]
+            adstock_params = params_adstock[store_group]["adstock_alphas"]
+        else:
+            continue
+
+        START_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 0)
+        END_ANALYSIS_INDEX = round(final_data_store_group_wi.shape[0] * 1) 
+
+        result = model_refit(data = final_data_store_group_wi, 
+                            target = target,
+                            features = features, 
+                            media_channels = media_channels,
+                            model_params = best_params, 
+                            adstock_params = adstock_params, 
+                            start_index = START_ANALYSIS_INDEX, 
+                            end_index = END_ANALYSIS_INDEX)
+        
+        shap_values_scope = result['df_shap_values']
+        data_input_nontransformed = result['x_input_interval_nontransformed']
+        feature_list = data_input_nontransformed.columns
+
+        if isinstance(shap_values_scope, pd.DataFrame) == False:
+            shap_v = pd.DataFrame(shap_values_scope)
+            shap_v.columns = feature_list
+        else:
+            shap_v = shap_values_scope
+
+        shap_abs = np.abs(shap_v)
+        k=pd.DataFrame(shap_abs.mean()).reset_index()
+        k.columns=['reason','score']
+
+        list_shap_values = {}
+        for indice, row in k.iterrows():
+            if row['reason'] == 'trend' or row['reason'] == 'season':
+                continue
+            else:
+                list_shap_values[row['reason']] = row['score']
+
+        dict_result[store_group] = list_shap_values
+
+    return dict_result
+
 
 
 def calculated_increment_sales(model,
@@ -637,6 +746,11 @@ def list_investment_store_group(waiting_increase,list_sg = list_store_group):
 
                 best_params = experiment.best_trial.user_attrs["params"]
                 adstock_params = experiment.best_trial.user_attrs["adstock_alphas"]
+            
+                with open(file_json, "w") as archivo_json:
+                    json.dump(params_adstock, archivo,indent=4)
+                archivo_json.close()
+
             else:
                 best_params = params_adstock[store_group]["params"]
                 adstock_params = params_adstock[store_group]["adstock_alphas"]
@@ -654,8 +768,6 @@ def list_investment_store_group(waiting_increase,list_sg = list_store_group):
                                 start_index = START_ANALYSIS_INDEX, 
                                 end_index = END_ANALYSIS_INDEX)
             
-            with open(file_json, "w") as archivo:
-                json.dump(params_adstock, archivo,indent=4)
 
             investment = calculated_increment_sales(result['model'],
                                     waiting_increase,
