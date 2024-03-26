@@ -430,9 +430,9 @@ def main():
         # selection_radio = st.radio("Seleccion con cuantas semanas de delay quiere hacer la prediccion",["1 semana","2 semanas"])
 
         # type_of_client = st.selectbox("Tipo de cliente:", ["Cliente Nuevo","Cliente con Historial"])
-        type_of_client = st.selectbox("Tipo de cliente:", ["Cliente Nuevo","Cliente con Historial"])
+        type_of_client = st.selectbox("Tipo de cliente:", ["Campaña Nueva","Campaña con Historial"])
 
-        if type_of_client == "Cliente Nuevo":
+        if type_of_client == "Campaña Nueva":
             camaping_new_client = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group_new_client)
             serie_ISOweek = df_sales_storeGroup.query("campaign_storeGroup in @camaping_new_client")["ISOweek"]
             min_date = min(serie_ISOweek)
@@ -453,7 +453,7 @@ def main():
             # selected_time = (start_date, end_date)
 
 
-    if type_of_client == "Cliente Nuevo":
+    if type_of_client == "Campaña Nueva":
         
         st.header("Estimación de inversión inicial")
         
