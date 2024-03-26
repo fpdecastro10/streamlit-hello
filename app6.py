@@ -184,7 +184,7 @@ def arbol_regressor(store_group_name):
     st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Shap graph</h3>", unsafe_allow_html=True)
     st.pyplot(fig_shapp)
 
-    st.line_chart(final_data_store_group_wi[['trend','season']])
+    # st.line_chart(final_data_store_group_wi[['trend','season']])
     
     date_to_estimate = datetime.today()
     date_to_trashold = date_to_estimate - timedelta(days=1*30)

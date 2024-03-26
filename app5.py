@@ -417,7 +417,7 @@ def new_client(camaping_new_client,investment,selectedStoreGroups,dict_shap):
         df_filter_by_camp_time["Inversión ($)"] = (df_filter_by_camp_time["share tiendas budget"] + df_filter_by_camp_time["share ventas budget"]) / 2
         st.markdown(dataframe_to_markdown(df_filter_by_camp_time[["Store Group","Inversión ($)"]]), unsafe_allow_html=True)
     st.markdown("<div style='height:20px'></div>",unsafe_allow_html=True)
-    pie_graph(pd.DataFrame(set_coeffs.items(), columns=['canal', 'Inversión ($)']),"canal","investment","Distribución del budget total por canal")
+    pie_graph(pd.DataFrame(set_coeffs.items(), columns=['canal', 'Inversión ($)']),"canal","Inversión ($)","Distribución del budget total por canal")
     pie_graph(df_filter_by_camp_time,"Store Group","Inversión ($)","Distribución del budget total por Store Group")
 
 def main():
