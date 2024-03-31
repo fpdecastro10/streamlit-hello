@@ -73,7 +73,7 @@ def main():
         unique_combinations = data_sw[["id_storeGroup","name_storeGroup","campaign_storeGroup"]].drop_duplicates(["id_storeGroup","name_storeGroup","campaign_storeGroup"])
         optionOfNameCampaign = unique_combinations["campaign_storeGroup"].drop_duplicates().tolist()
 
-        opciones_seleccionadas = st.selectbox("Filtre por nombre de campaña:", optionOfNameCampaign)
+        opciones_seleccionadas = st.selectbox("Seleccione el nombre de la campaña", optionOfNameCampaign)
         unique_combinationsStore = unique_combinations.query(f"campaign_storeGroup in @opciones_seleccionadas")
         index_storeGroup = {}
         for index, row in unique_combinationsStore.iterrows():
@@ -87,10 +87,10 @@ def main():
         
         if index_storeGroup == {}:
             botones = ['No tiene sufieciente datos de campaña']
-            selected_filter = st.selectbox("Seleccione un storegroup:", botones)
+            selected_filter = st.selectbox("Seleccione el Store Group::", botones)
         else:
             botones = [key for key in index_storeGroup]
-            selected_filter = st.selectbox("Seleccione un storegroup:", botones)
+            selected_filter = st.selectbox("Seleccione el Store Group::", botones)
             opciones = ['Semanal', 'Mes']
             filtros_seleccionados = st.radio('Seleccione la granularidad de tiempo:', opciones)
             numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
@@ -147,7 +147,7 @@ def main():
 
         correlation_matrix = np.corrcoef(filtered_data["Treg"], filtered_data["sales"])
         correlation = correlation_matrix[0, 1]
-        st.write(f"Correlación: {round(correlation,4)}")
+        # st.write(f"Correlación: {round(correlation,4)}")
 
         # Crear el gráfico interactivo
         plt.xlabel('costo de campaña')
