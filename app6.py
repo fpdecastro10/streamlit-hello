@@ -68,7 +68,6 @@ file_json = 'parameter_sg.json'
 def arbol_regressor(store_group_name):
     
     st.markdown(f"<h1 style='font-size: 34px;text-align:center'>{store_group_name}</h1>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='font-size: 25px;margin:30px;margin-bottom:15px'>Predictive model</h3>", unsafe_allow_html=True)
     
     table_pivoted_sg = table_pivoted_r[
         table_pivoted_r['concat_store_group_name'] == store_group_name
@@ -170,22 +169,6 @@ def arbol_regressor(store_group_name):
     nrmse_metric = nrmse(result["y_true_interval"], result["prediction_interval"])
     r2_metric = r2_score(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
 
-
-    fig, ax = plt.subplots(figsize = (20, 10))
-    etiquetas_mostradas = result["x_input_interval_nontransformed"]['ISOweek'][::20]
-    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["prediction_interval"], color = "blue", label = "predicted")
-    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["y_true_interval"], 'ro', label = "true")
-    _ = plt.title(f"SG: {store_group_name}, RMSE: {np.round(rmse_metric)}, NRMSE: {np.round(nrmse_metric, 3)}, MAPE: {np.round(mape_metric, 3)}, R2: {np.round(r2_metric,3)}")
-    _ = ax.legend()
-    ax.set_xticks(etiquetas_mostradas)
-    st.pyplot(fig)
-
-    fig_shapp = shap_feature_importance(result["df_shap_values"], result["x_input_interval_transformed"])
-    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Shap graph</h3>", unsafe_allow_html=True)
-    st.pyplot(fig_shapp)
-
-    # st.line_chart(final_data_store_group_wi[['trend','season']])
-    
     date_to_estimate = datetime.today()
     date_to_trashold = date_to_estimate - timedelta(days=1*30)
     isoweeek_serie = pd.to_datetime(final_data_store_group_wi['ISOweek'])
@@ -199,20 +182,23 @@ def arbol_regressor(store_group_name):
         data_store_filter_by_date = final_data_store_group_wi[isoweeek_serie > date_to_trashold]
         average_sales = data_store_filter_by_date['sales'].mean()
 
-    st.write(f"average sales: {round(average_sales)}")
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Resumen del store group</h3>", unsafe_allow_html=True)
+
+    st.write(f"Promedio de ventas: {round(average_sales)}")
     if media_channels == []:
-        st.write(f"average cost_campaign: 0")
+        st.write(f"Promedio de costo por campaña: 0")
+
     else:
         total_cost_campaign = 0
         for tabla_medio in media_channels:
             cost_tabla_medio = final_data_store_group_wi[final_data_store_group_wi[tabla_medio]>0][tabla_medio].mean()
-            st.write(f"avearge {tabla_medio}: {round(cost_tabla_medio)}")
+            st.write(f"Promedio de inversión semanal {tabla_medio}: {round(cost_tabla_medio)}")
             total_cost_campaign += cost_tabla_medio
-        st.write(f"average cost_campaign: {round(total_cost_campaign/len(media_channels))}")
+        st.write(f"Promedio de costo por campaña: {round(total_cost_campaign/len(media_channels))}")
     
-    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predict sales</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción de ventas semanales</h3>", unsafe_allow_html=True)
 
-    season = st.date_input("Select a date (season):", date_to_estimate)
+    season = st.date_input("Seleccione la semana para la que desea predecir:", date_to_estimate)
 
     season_trend = pd.DataFrame({'ds': [season]})
     prohet_prediction = prophet.predict(season_trend)
@@ -220,7 +206,7 @@ def arbol_regressor(store_group_name):
 
     list_input = {}
     for tabla_medio in media_channels:
-        list_input[tabla_medio] = st.number_input(f"Insert {tabla_medio}: ", value=0)
+        list_input[tabla_medio] = st.number_input(f"Seleccione el monto a invertir semanalmente en {tabla_medio}: ", value=0)
 
     if st.button("Predecir sales"):
         for key, value in list_input.items():
@@ -229,8 +215,8 @@ def arbol_regressor(store_group_name):
         prediction_str = f"La predicción de ventas es: {round(prediction[0])} un"
         st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{prediction_str}</h3>", unsafe_allow_html=True)
 
-    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predict investment</h3>", unsafe_allow_html=True)
-    input_investment = st.number_input("Insert a number to grow: ", value=0)
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción de crecimiento</h3>", unsafe_allow_html=True)
+    input_investment = st.number_input("Ingrese el crecimiento porcentual deseado por semana (%): ", value=0)
 
     if st.button("Predecir investment"):
         calculated_investment = calculated_increment_sales(
@@ -242,6 +228,20 @@ def arbol_regressor(store_group_name):
                                 features)
         st.markdown(f"<p style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{calculated_investment[0]}</p>", unsafe_allow_html=True)
 
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción del modelo</h3>", unsafe_allow_html=True)
+    
+    fig, ax = plt.subplots(figsize = (20, 10))
+    etiquetas_mostradas = result["x_input_interval_nontransformed"]['ISOweek'][::20]
+    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["prediction_interval"], color = "blue", label = "predicted")
+    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["y_true_interval"], 'ro', label = "true")
+    _ = plt.title(f"SG: {store_group_name}, RMSE: {np.round(rmse_metric)}, NRMSE: {np.round(nrmse_metric, 3)}, MAPE: {np.round(mape_metric, 3)}, R2: {np.round(r2_metric,3)}")
+    _ = ax.legend()
+    ax.set_xticks(etiquetas_mostradas)
+    st.pyplot(fig)
+
+    fig_shapp = shap_feature_importance(result["df_shap_values"], result["x_input_interval_transformed"])
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Gráfico de Importancia de Atributos con SHAP</h3>", unsafe_allow_html=True)
+    st.pyplot(fig_shapp)
 
 
 def main():
@@ -253,11 +253,11 @@ def main():
 
         campaing_store_group = data_whole_sg_wp['campaign'].unique().tolist()
 
-        camaping_new_client = st.selectbox("Filtre por nombre de campaña:", campaing_store_group)
+        camaping_new_client = st.selectbox("Seleccione el nombre de la campaña: ", campaing_store_group)
 
         list_store_group_campaign = data_whole_sg_wp.query("campaign in @camaping_new_client")["concat_store_group_name"].unique().tolist()
         
-        camaping_new_client = st.selectbox("Seleccione un store group que desea incluir en la distribución", list_store_group_campaign)
+        camaping_new_client = st.selectbox("Seleccione el Store Group:", list_store_group_campaign)
         
         dataset_after_filter_sorted = data_whole_sg_wp.query("concat_store_group_name in @camaping_new_client").sort_values(by="ISOweek")
 

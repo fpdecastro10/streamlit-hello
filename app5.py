@@ -427,13 +427,10 @@ def main():
         st.image(imagen_local, use_column_width=True)
         st.markdown('<h1 style="font-size: 34px;">Filtros </h1>', unsafe_allow_html=True)
 
-        # selection_radio = st.radio("Seleccion con cuantas semanas de delay quiere hacer la prediccion",["1 semana","2 semanas"])
-
-        # type_of_client = st.selectbox("Tipo de cliente:", ["Cliente Nuevo","Cliente con Historial"])
-        type_of_client = st.selectbox("Tipo de cliente:", ["Campaña Nueva","Campaña con Historial"])
+        type_of_client = st.selectbox("Seleccione el tipo de campaña:", ["Campaña Nueva","Campaña con Historial"])
 
         if type_of_client == "Campaña Nueva":
-            camaping_new_client = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group_new_client)
+            camaping_new_client = st.selectbox("Seleccione el nombre de la campaña: ", list_campaing_store_group_new_client)
             serie_ISOweek = df_sales_storeGroup.query("campaign_storeGroup in @camaping_new_client")["ISOweek"]
             min_date = min(serie_ISOweek)
             max_date =  max(serie_ISOweek)
@@ -441,17 +438,9 @@ def main():
             list_store_group_coeff += data_sw['concat_store_group_name'].unique().tolist()
             
         else:
-            selected_option_campaign = st.selectbox("Filtre por nombre de campaña:", list_campaing_store_group)
+            selected_option_campaign = st.selectbox("Seleccione el nombre de la campaña: ", list_campaing_store_group)
             investment_in_media = st.number_input("Inversión en medios:",min_value=0)
-            serie_ISOweek = data_sw.query("campaign in @selected_option_campaign")["ISOweek"]                
-            # min_date, max_date = min(serie_ISOweek), max(serie_ISOweek)
-            # start_date, end_date = st.select_slider(
-            #     "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
-            #     options=serie_ISOweek.sort_values(),
-            #     value=[min_date, max_date]
-            # )
-            # selected_time = (start_date, end_date)
-
+            serie_ISOweek = data_sw.query("campaign in @selected_option_campaign")["ISOweek"]
 
     if type_of_client == "Campaña Nueva":
         

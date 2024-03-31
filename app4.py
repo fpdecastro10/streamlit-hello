@@ -34,11 +34,8 @@ relations_storeGroup_products = data_sw[["id_storeGroup","sku_id"]].drop_duplica
 
 def main():
     with st.sidebar:
-        imagen_local='./logo2x.png'
-        st.image(imagen_local, use_column_width=True)
-        st.markdown('<h1 style="font-size: 34px;">Filtros </h1>', unsafe_allow_html=True)
-
-        opciones_seleccionadas = st.selectbox("Filtre por nombre de campaña:", unique_combinations_campaign)
+        
+        opciones_seleccionadas = st.selectbox("Seleccione el nombre de la campaña:", unique_combinations_campaign)
         unique_combinationsStore = unique_combinations.query(f"campaign_storeGroup in @opciones_seleccionadas")
 
         index_storeGroup = {}
@@ -63,7 +60,6 @@ def main():
 
         min_value_calculated=min(dataset_after_filter['ISOweek'])
         max_value_calculated=max(dataset_after_filter['ISOweek'])
-        selected_time = st.slider("Seleccione la ventana temporal de referencia para el cálculo de crecimiento", min_value=min_value_calculated, max_value=max_value_calculated, value=(min_value_calculated, max_value_calculated))
         
         start_date, end_date = st.select_slider(
             "Seleccione la ventana temporal de referencia para el cálculo de crecimiento",
@@ -113,7 +109,7 @@ def main():
         store_selected = st.selectbox("Stores con tendencia positiva:", stores_filter)
         store_selected_filter = relations_storesDB_storeId.query(f"`Store id` == {store_selected}")["stores"].unique()[0]
 
-    dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected_filter} and {selected_time[0]} < ISOweek and ISOweek < {selected_time[1]}")
+    dataset_after_filter_sorted_by_store_and_time_window = dataset_after_filter_sorted.query(f"id_store_retailer == {store_selected_filter} and {start_date} < ISOweek and ISOweek < {end_date}")
     negative_tendecy_of_stores = dataset_after_filter_sorted_by_store_and_time_window[["ISOweek","sales"]]
 
     boundaries = dict(negative_tendecy_of_stores['sales'].describe())
@@ -178,17 +174,17 @@ def main():
             }
         </style>
     """
-
-    # App layout
-    st.markdown(hover_effect_with_popup, unsafe_allow_html=True)
-    df_stores_formated = df_stores.to_html(index=False).replace("<td>","<td style='text-align:center'>").replace("<table border='1' class='dataframe'>","<table border='1' class='dataframe' sytle='margin:auto'>").replace("<th>","<th style='text-align:center'>").replace("Tendencia de venta","<span class='enlace'>Tendencia de ventas &#9432</span>")
-    st.markdown(df_stores_formated,unsafe_allow_html=True)
-
+    
     csv_data = df_stores.to_csv(index=False)
     b64 = base64.b64encode(csv_data.encode()).decode()
     href = f'<a href="data:file/csv;base64,{b64}" download="exported_{selected_filter}.csv">Descargar CSV</a>'
     st.markdown("<div style='height:40px'>",unsafe_allow_html=True)
     st.markdown(href,unsafe_allow_html=True)
+
+    # App layout
+    st.markdown(hover_effect_with_popup, unsafe_allow_html=True)
+    df_stores_formated = df_stores.to_html(index=False).replace("<td>","<td style='text-align:center'>").replace("<table border='1' class='dataframe'>","<table border='1' class='dataframe' sytle='margin:auto'>").replace("<th>","<th style='text-align:center'>").replace("Tendencia de venta","<span class='enlace'>Tendencia de ventas &#9432</span>")
+    st.markdown(df_stores_formated,unsafe_allow_html=True)
     
     title_graph = f"""
     Store Id: {store_selected} - Retailer: {retailer_name}
