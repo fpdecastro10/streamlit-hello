@@ -65,6 +65,67 @@ list_store_group = table_pivoted_r['concat_store_group_name'].unique().tolist()
 
 file_json = 'parameter_sg.json'
 
+
+def shap_values(shap_values, data, figsize = (20, 10)):
+    
+    feature_list = data.columns
+    
+    if isinstance(shap_values, pd.DataFrame) == False:
+        shap_v = pd.DataFrame(shap_values)
+        shap_v.columns = feature_list
+    else:
+        shap_v = shap_values
+    
+        
+    df_v = data.copy().reset_index().drop('index',axis=1)
+    
+    # Determine the correlation in order to plot with different colors
+    corr_list = list()
+    for i in feature_list:
+        b = np.corrcoef(shap_v[i],df_v[i])[1][0]
+        corr_list.append(b)
+    corr_df = pd.concat([pd.Series(feature_list),pd.Series(corr_list)],axis=1).fillna(0)
+    # Make a data frame. Column 1 is the feature, and Column 2 is the correlation coefficient
+    corr_df.columns  = ['Variable','Corr']
+    corr_df['Sign'] = np.where(corr_df['Corr']>0,'red','blue')
+    
+    # Plot it
+    shap_abs = np.abs(shap_v)
+    k=pd.DataFrame(shap_abs.mean()).reset_index()
+    k.columns = ['Variable','SHAP_abs']
+
+    return k
+
+def info_shap_value(dataframe_shap, features):
+    list_msg = []
+    if len(features) == 2:
+        list_msg.append("El store group no tiene asignación de campañas")
+    list_post = []
+    list_neg = []
+    for index, row in dataframe_shap.iterrows():
+        if row['Variable'] == 'trend' or row['Variable'] == 'season':
+            continue
+        else:
+            name_variable = row['Variable'].replace(" Weekly","")
+            if row['SHAP_abs'] > 0:
+                list_post.append(name_variable)
+            else:
+                list_neg.append(name_variable)
+
+    if len(list_post) == 2:
+        list_msg.append(f"Los medios {list_post[0]} y {list_post[1]} influye positivamente en las ventas")
+    if len(list_post) == 1:
+        list_msg.append(f"Los medios {list_post[0]} influye positivamente en las ventas")
+
+    if len(list_neg) == 2:
+        list_msg.append(f"Los medios {list_neg[0]} y {list_neg[1]} no explican en las ventas")
+    if len(list_neg) == 1:
+        list_msg.append(f"Los medios {list_neg[0]} no explica las ventas")
+    
+    return list_msg
+
+
+
 def arbol_regressor(store_group_name):
     
     st.markdown(f"<h1 style='font-size: 34px;text-align:center'>{store_group_name}</h1>", unsafe_allow_html=True)
@@ -164,10 +225,25 @@ def arbol_regressor(store_group_name):
                      start_index = START_ANALYSIS_INDEX, 
                      end_index = END_ANALYSIS_INDEX)
     
-    rmse_metric = mean_squared_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"], squared=False)
-    mape_metric = mean_absolute_percentage_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
-    nrmse_metric = nrmse(result["y_true_interval"], result["prediction_interval"])
-    r2_metric = r2_score(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
+    # rmse_metric = mean_squared_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"], squared=False)
+    # mape_metric = mean_absolute_percentage_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
+    # nrmse_metric = nrmse(result["y_true_interval"], result["prediction_interval"])
+    # r2_metric = r2_score(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
+    
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Evolución de ventas: Real vs Predicción</h3>", unsafe_allow_html=True)
+    
+    fig, ax = plt.subplots(figsize = (20, 10))
+    etiquetas_mostradas = result["x_input_interval_nontransformed"]['ISOweek'][::20]
+    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["prediction_interval"], color = "blue", label = "predicted")
+    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["y_true_interval"], 'ro', label = "true")
+    # _ = plt.title(f"SG: {store_group_name}, RMSE: {np.round(rmse_metric)}, NRMSE: {np.round(nrmse_metric, 3)}, MAPE: {np.round(mape_metric, 3)}, R2: {np.round(r2_metric,3)}")
+    _ = ax.legend()
+    ax.set_xticks(etiquetas_mostradas)
+    st.pyplot(fig)
+
+    fig_shapp = shap_feature_importance(result["df_shap_values"], result["x_input_interval_transformed"])
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Gráfico de Importancia de Atributos con SHAP</h3>", unsafe_allow_html=True)
+    st.pyplot(fig_shapp)
 
     date_to_estimate = datetime.today()
     date_to_trashold = date_to_estimate - timedelta(days=1*30)
@@ -184,17 +260,18 @@ def arbol_regressor(store_group_name):
 
     st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Resumen del store group</h3>", unsafe_allow_html=True)
 
-    st.write(f"Promedio de ventas: {round(average_sales)}")
-    if media_channels == []:
-        st.write(f"Promedio de costo por campaña: 0")
+    shap_values_df = shap_values(result["df_shap_values"], result["x_input_interval_transformed"])
+    for msg in info_shap_value(shap_values_df,features):
+        st.write(msg)
 
-    else:
+    st.write(f"Promedio de ventas semanales: {round(average_sales)}")
+    if media_channels != []:
         total_cost_campaign = 0
         for tabla_medio in media_channels:
             cost_tabla_medio = final_data_store_group_wi[final_data_store_group_wi[tabla_medio]>0][tabla_medio].mean()
-            st.write(f"Promedio de inversión semanal {tabla_medio}: {round(cost_tabla_medio)}")
+            name_variable = tabla_medio.replace(" Weekly","")
+            st.write(f"Promedio de inversión semanal {name_variable}: {round(cost_tabla_medio)}")
             total_cost_campaign += cost_tabla_medio
-        st.write(f"Promedio de costo por campaña: {round(total_cost_campaign/len(media_channels))}")
     
     st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción de ventas semanales</h3>", unsafe_allow_html=True)
 
@@ -206,7 +283,8 @@ def arbol_regressor(store_group_name):
 
     list_input = {}
     for tabla_medio in media_channels:
-        list_input[tabla_medio] = st.number_input(f"Seleccione el monto a invertir semanalmente en {tabla_medio}: ", value=0)
+        name_variable = tabla_medio.replace(" Weekly","")
+        list_input[tabla_medio] = st.number_input(f"Seleccione el monto a invertir semanalmente en {name_variable}: ", value=0)
 
     if st.button("Predecir sales"):
         for key, value in list_input.items():
@@ -215,7 +293,7 @@ def arbol_regressor(store_group_name):
         prediction_str = f"La predicción de ventas es: {round(prediction[0])} un"
         st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{prediction_str}</h3>", unsafe_allow_html=True)
 
-    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción de crecimiento</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción de crecimiento porcentual</h3>", unsafe_allow_html=True)
     input_investment = st.number_input("Ingrese el crecimiento porcentual deseado por semana (%): ", value=0)
 
     if st.button("Predecir investment"):
@@ -228,20 +306,6 @@ def arbol_regressor(store_group_name):
                                 features)
         st.markdown(f"<p style='font-size: 25px;margin-top:30px;margin-bottom:15px'>{calculated_investment[0]}</p>", unsafe_allow_html=True)
 
-    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Predicción del modelo</h3>", unsafe_allow_html=True)
-    
-    fig, ax = plt.subplots(figsize = (20, 10))
-    etiquetas_mostradas = result["x_input_interval_nontransformed"]['ISOweek'][::20]
-    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["prediction_interval"], color = "blue", label = "predicted")
-    _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["y_true_interval"], 'ro', label = "true")
-    _ = plt.title(f"SG: {store_group_name}, RMSE: {np.round(rmse_metric)}, NRMSE: {np.round(nrmse_metric, 3)}, MAPE: {np.round(mape_metric, 3)}, R2: {np.round(r2_metric,3)}")
-    _ = ax.legend()
-    ax.set_xticks(etiquetas_mostradas)
-    st.pyplot(fig)
-
-    fig_shapp = shap_feature_importance(result["df_shap_values"], result["x_input_interval_transformed"])
-    st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Gráfico de Importancia de Atributos con SHAP</h3>", unsafe_allow_html=True)
-    st.pyplot(fig_shapp)
 
 
 def main():

@@ -136,9 +136,6 @@ def main():
     
     plt.figure(figsize=(8, 6))
     
-    # ax = negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="sales",color="yellow")
-    # negative_tendecy_of_stores.plot.scatter(x="ISOweek",y="Treg",color="red",legend=False,ax=ax)
-    
     plt.scatter(negative_tendecy_of_stores['ISOweek'],negative_tendecy_of_stores['Treg'], color='#F5FCCD')
     plt.scatter(df_25['ISOweek'],df_25['sales'],color='#C70039',label='sales<=25%')
     plt.scatter(df_50['ISOweek'],df_50['sales'],color='#F94C10',label='25%<sales<75%')
@@ -150,7 +147,6 @@ def main():
     plt.xticks(etiquetas_personalizadas)
     plt.xlabel('week')
     plt.ylabel('sales')
-    st.markdown("<h3 style='text-align:center'>Tendecias de ventas</h3>",unsafe_allow_html=True)
     plt.legend()
     st.markdown("<h3 style='text-align:center'>Top 10 stores con mayor tendencia negativa dentro del Store Group seleccionado</h3>", unsafe_allow_html=True)
     df_stores.drop(columns='stores',inplace=True)

@@ -87,10 +87,10 @@ def main():
         
         if index_storeGroup == {}:
             botones = ['No tiene sufieciente datos de campaña']
-            selected_filter = st.selectbox("Seleccione el Store Group::", botones)
+            selected_filter = st.selectbox("Seleccione el Store Group:", botones)
         else:
             botones = [key for key in index_storeGroup]
-            selected_filter = st.selectbox("Seleccione el Store Group::", botones)
+            selected_filter = st.selectbox("Seleccione el Store Group:", botones)
             opciones = ['Semanal', 'Mes']
             filtros_seleccionados = st.radio('Seleccione la granularidad de tiempo:', opciones)
             numero_ingresado = st.number_input("Ingrese el monto de campaña a invertir", value=0.0, step=0.1)
@@ -112,7 +112,7 @@ def main():
 
     if index_storeGroup != {}:
         # Configuración de la aplicación
-        st.markdown('<h1 style="text-align: center;">Costo de campaña vs Sales por Store group</h1>', unsafe_allow_html=True)
+        st.markdown('<h3 style="text-align: center;margin:30px">Costo de campaña vs Sales por Store group</h3>', unsafe_allow_html=True)
         # Filtrar los datos según el botón seleccionado
         filter_data_storeGroup = data_sw.query(f"id_storeGroup == {index_storeGroup[selected_filter]}") 
         
@@ -147,7 +147,7 @@ def main():
 
         correlation_matrix = np.corrcoef(filtered_data["Treg"], filtered_data["sales"])
         correlation = correlation_matrix[0, 1]
-        # st.write(f"Correlación: {round(correlation,4)}")
+        # st.write(f"Correlación: {round(correlation,4)}")  
 
         # Crear el gráfico interactivo
         plt.xlabel('costo de campaña')
@@ -156,7 +156,7 @@ def main():
         st.pyplot(plt)
 
         if numero_ingresado == 0:
-            st.markdown(f"## Coloque un monto a calcular")
+            st.markdown(f"#### Coloque un monto a calcular")
         else:
             if filtros_seleccionados == 'Mes':
                 ventas_totales = f(numero_ingresado/4) * 4

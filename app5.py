@@ -204,29 +204,6 @@ def second_approach(input_number,list_seleceted_campaign,bool_execute):
             df_store_investment = pd.DataFrame(list_dataframe, columns=['Store group', 'Inversión($)'])
             st.markdown(dataframe_to_markdown(df_store_investment), unsafe_allow_html=True)
 
-        # for medio in list_tabla_medio:
-        #     percentage = round(input_number * dict_tablaMedio_sum_avg[medio]["per"])
-        #     medio_iter = medio.split(" ")[0]
-        #     st.markdown(f"<h4>Se recomienda invertir ${percentage} del total en el canal {medio_iter}</h4>",unsafe_allow_html=True)
-
-        #     data_filter = df_sales_filter_by_date_list_StoreGroup.groupby("Store Group").agg({"id_store_retailer":"nunique","sales":"sum"}).reset_index()
-        #     data_filter["per tiendas"] = data_filter['id_store_retailer'] / data_filter['id_store_retailer'].sum() * 100
-        #     data_filter["per sales"] = data_filter['sales'] / data_filter['sales'].sum() * 100
-        #     data_filter["KPI"] =  data_filter["per sales"] / data_filter["per tiendas"]
-        #     data_filter["share tiendas budget"] = (data_filter["per tiendas"]/100) * percentage
-        #     data_filter["share ventas budget"] = (data_filter["per sales"]/100) * percentage
-        #     data_filter["investment"] = (data_filter["share tiendas budget"] + data_filter["share ventas budget"]) / 2
-                
-        #     st.markdown(dataframe_to_markdown(pd.DataFrame(data_filter[["Store Group","investment"]])), unsafe_allow_html=True)
-        # st.markdown("<div style='height:20px'></div>",unsafe_allow_html=True)
-        # # pie_graph(pd.DataFrame(dict_of_avg_alpha_coefs_shares.items(), columns=['tabla_medio', 'investment']),"tabla_medio","investment","Distribución de budget por tabla medio")
-
-        # dict_medio_per = {}
-        # for key, value in dict_tablaMedio_sum_avg.items():
-        #     dict_medio_per[key] = value["per"]
-        # pie_graph(pd.DataFrame(dict_medio_per.items(), columns=['canal', 'investment']),"canal","investment","Distribución del budget total por canal")
-        # pie_graph(data_filter,"Store Group","investment","Distribución del budget total por Store Group")
-
 def third_percent_dict(selectedGroup):
     list_storeGroups_id = data_sw_1.query("concat_store_group_name in @selectedGroup")["concat_store_group_name"].unique().tolist()
     dict_result = {}

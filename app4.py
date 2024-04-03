@@ -146,7 +146,6 @@ def main():
     plt.xticks(etiquetas_personalizadas)
     plt.xlabel('week')
     plt.ylabel('sales')
-    st.markdown("<h3 style='text-align:center'>Tendecias de ventas</h3>",unsafe_allow_html=True)
     plt.legend()
     st.markdown("<h3 style='text-align:center'>Top 10 stores con mayor tendencia positiva dentro del Store Group seleccionado</h3>", unsafe_allow_html=True)
     df_stores.drop(columns='stores',inplace=True)

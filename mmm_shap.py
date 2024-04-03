@@ -237,7 +237,6 @@ def shap_feature_importance(shap_values, data, figsize = (20, 10)):
     fig, ax = plt.subplots(figsize=figsize)
     ax = k2.plot.barh(x='Variable',y='SHAP_abs',color = colorlist, figsize=figsize,legend=False)
     ax.set_xlabel("SHAP Value (Red = Positive Impact)")
-    
 
 def model_refit(data, 
                 target, 
