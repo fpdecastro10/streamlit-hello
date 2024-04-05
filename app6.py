@@ -1,8 +1,6 @@
 import streamlit as st
 st.set_option('deprecation.showPyplotGlobalUse', False)
 import numpy as np
-from sklearn.model_selection import train_test_split
-from app1 import dataframe_to_markdown
 from mmm_shap import optuna_optimize, model_refit, nrmse, shap_feature_importance,calculated_increment_sales, df_builder_tablaMedio, obtener_fecha_domingo
 import matplotlib.pyplot as plt
 import os
