@@ -226,7 +226,7 @@ def arbol_regressor(store_group_name):
     # rmse_metric = mean_squared_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"], squared=False)
     # mape_metric = mean_absolute_percentage_error(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
     # nrmse_metric = nrmse(result["y_true_interval"], result["prediction_interval"])
-    # r2_metric = r2_score(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
+    r2_metric = r2_score(y_true = result["y_true_interval"], y_pred = result["prediction_interval"])
     
     st.markdown(f"<h3 style='font-size: 25px;margin-top:30px;margin-bottom:15px'>Evolución de ventas: Real vs Predicción</h3>", unsafe_allow_html=True)
     
@@ -234,7 +234,7 @@ def arbol_regressor(store_group_name):
     etiquetas_mostradas = result["x_input_interval_nontransformed"]['ISOweek'][::20]
     _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["prediction_interval"], color = "blue", label = "predicted")
     _ = ax.plot(result['x_input_interval_nontransformed']['ISOweek'],result["y_true_interval"], 'ro', label = "true")
-    # _ = plt.title(f"SG: {store_group_name}, RMSE: {np.round(rmse_metric)}, NRMSE: {np.round(nrmse_metric, 3)}, MAPE: {np.round(mape_metric, 3)}, R2: {np.round(r2_metric,3)}")
+    _ = plt.title(f"R2: {np.round(r2_metric,3)}")
     _ = ax.legend()
     ax.set_xticks(etiquetas_mostradas)
     st.pyplot(fig)
